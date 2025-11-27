@@ -6,9 +6,9 @@ public class P2PChat {
 
     public static void main(String[] args) {
         Scanner userInput = new Scanner(System.in);
-        System.out.println("--- Simple P2P Chat ---");
+        System.out.println("--- Simple P2P Chat 1 - 1 Only ---");
         System.out.println("1. Host a chat (Server)");
-        System.out.println("2. Join a chat (Client)");
+        System.out.println("2. Join a chat (Client)"); 
         System.out.print("Choose an option: ");
         
         int choice = userInput.nextInt();
@@ -40,14 +40,11 @@ public class P2PChat {
                 return;
             }
 
-            // INPUT/OUTPUT STREAMS
-            // Used to send data to the other person
             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
             // Used to read data coming from the other person
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-            // THREAD FOR RECEIVING MESSAGES
-            // We run this in a separate thread so we can type and receive at the same time
+
             Thread receiveThread = new Thread(() -> {
                 try {
                     String msg;
@@ -60,7 +57,6 @@ public class P2PChat {
             });
             receiveThread.start();
 
-            // MAIN THREAD FOR SENDING MESSAGES
             System.out.println("Type a message and press Enter to send (Type 'exit' to quit):");
             while (true) {
                 String message = userInput.nextLine();
