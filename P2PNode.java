@@ -38,15 +38,35 @@ public class P2PNode {
                     int port = Integer.parseInt(parts[2]);
                     connectToPeer(ip, port);
                 } else {
-                    System.out.println("Usage: /connect [IP] [PORT]");
+                    System.out.println("Must contain: [IP] [PORT] ");//[PORT]Usage: /connect [IP] [PORT]");
                 }
+            
             } else {
                 // Normal chat message - Send to ALL connected peers
                 broadcast("[" + username + "]: " + input);
             }
+       
         }
     }
+/*
+Add JSON parse code here for the "/message" command
 
+    if (input.startsWith("/message")){
+        String[] components = input.split("");
+        if (components.length ==3){  -- change the 3 if adding more JSON rules 
+            String origin = components[1]; - always have this be USERNAME so maybe edit it to be not able to be inputted
+            String root = 
+        
+        
+        }                
+    
+    }
+
+
+
+
+
+*/
     // Method to connect to another peer (acting as Client)
     private static void connectToPeer(String ip, int port) {
         try {

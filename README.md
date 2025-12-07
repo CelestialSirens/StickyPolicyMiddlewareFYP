@@ -4,8 +4,9 @@ Currently a repo to help in the creation and design of my Sticky Policy Middlewa
 
   What is a Sticky Policy Middleware?
 
-A middleware which uses two key elements, Policies which give rules and commands that the messages and information sent between the web application must follow. Secondly the sticky aspect, which means that these policies 'stick' with the message in a code format.
+02/12/25
 
-The current design is W.I.P and will primairly be focusing around a DRM (Digital rights management) approach constantly checking if a message has the right to be viewed.
+Issues -- 
+If two or more Peers have the same username how do you define who the peer is? How do you stop this from occuring
 
-Most likely this is gonna be either fully in Java as the JVM will allow for higher portability in a vm setting / different OS setting or fully web as it can create the same affect but not as quickly.
+How to make sure a user can not corupt the privacy elements of the code by pretending to be another user i.e. IP spoof etc.
