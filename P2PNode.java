@@ -1,32 +1,34 @@
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import org.json.JSONObject.*;
 
 public class P2PNode {
-    // List to keep track of all the people we are talking to
+   // private static final String UUID = UUID.randomUUID().toString(); // this is temp before DHT
+    // List to keep track of all the people we are talking to : Change to DHT 
     private static final List<PrintWriter> peers = Collections.synchronizedList(new ArrayList<>());
-
+    private static String username; // Store username globally
     public static void main(String[] args) throws IOException {
         Scanner scanner = new Scanner(System.in);
 
         System.out.println("--- P2P Multi-User Node ---");
         System.out.print("Enter your username: ");
-        String username = scanner.nextLine();
+        username = scanner.nextLine();
 
         System.out.print("Enter the port you want to listen on (e.g. 6000): ");
         int myPort = Integer.parseInt(scanner.nextLine());
 
-        // 1. START THE SERVER THREAD
-        // This runs in the background and waits for others to connect to YOU
+        // Server Thread start
         new Thread(new ServerTask(myPort)).start();
 
         System.out.println("You are listening on port " + myPort);
         System.out.println("Connect to other user, type: /connect [IP] [PORT]");
+        System.err.println("To specify a user you wish to dm (JSON), type:/message [Username]");
         System.out.println("To send a message, just type it.");
         System.out.println("-------------------------------------------------");
 
-        // 2. MAIN THREAD - HANDLES USER INPUT
-        // This allows you to type messages or commands
+        // USER INPUT While case
+
         while (true) {
             String input = scanner.nextLine();
 
@@ -44,30 +46,30 @@ public class P2PNode {
             } else {
                 // Normal chat message - Send to ALL connected peers
                 broadcast("[" + username + "]: " + input);
+            } 
+                if (input.startsWith("/message")) {
+                // /message [reciverUUID] [content]
+                String[] parts = input.split("input",3);
+                if (parts.length < 3) {
+                    System.out.println("Command: /message [Username to send to] [Content]");
+                } else {
+                    String reciverUUID = parts[1];
+                    String JsonContent = parts[2];
+                }
+                    // Call builder here, 
             }
-       
+
         }
     }
 /*
-Add JSON parse code here for the "/message" command
+Add Json Builder here
 
-    if (input.startsWith("/message")){
-        String[] components = input.split("");
-        if (components.length ==3){  -- change the 3 if adding more JSON rules 
-            String origin = components[1]; - always have this be USERNAME so maybe edit it to be not able to be inputted
-            String root = 
+   public static String JsonBuilder(String senderUUID, String reciverUUID, String message){
         
-        
-        }                
-    
     }
 
-
-
-
-
 */
-    // Method to connect to another peer (acting as Client)
+    // Client thread connect-other
     private static void connectToPeer(String ip, int port) {
         try {
             Socket socket = new Socket(ip, port);
@@ -83,7 +85,7 @@ Add JSON parse code here for the "/message" command
         // Output stream: used to send messages TO this peer
         PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
         
-        // Add to our list of peers so we can broadcast to them later
+        // Change this for DHT
         peers.add(out);
 
         // Input stream: used to listen for messages FROM this peer
