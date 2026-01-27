@@ -1,8 +1,16 @@
-# StickyPolicyMiddlewareFYP
-Currently a repo to help in the creation and design of my Sticky Policy Middleware FYP
+# Phoebe - A StickyPolicyMiddlewareFYP
+
+Phoebe is a p2p console based chat application using a sticky policy privacy method to attempt user privacy.
+The goal of Phoebe is to create a Java based multi user P2P chat app, that allows users to send messages and images without fear of privacy infringments.
+
+  By using a JSON based sticky policy, any message sent in DMs follows a strict logging method showing: who has opened the message, if it has been edited/when, 
 
 
+
+  
   What is a Sticky Policy Middleware?
+
+  - A sticky policy is a piece of data that 'sticks' with other data being sent. In this case when a user attempts to write a message to another user, fields must be set on the JSON being sent to ensure it is correctly sending the data alongside the logs needed. 
 
 02/12/25
 
