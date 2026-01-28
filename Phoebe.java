@@ -6,9 +6,9 @@ import java.util.*;
 import org.json.JSONObject;
 import org.json.JSONObject.*;
 
-public class P2PNode {
+public class Phoebe {
     //private static final String UUID = UUID.randomUUID().toString(); // this is temp before DHT
-private static final String UUID = 
+//private static final String UUID = 
     // List to keep track of all the people we are talking to : Change to DHT 
     private static final List<PrintWriter> peers = Collections.synchronizedList(new ArrayList<>());
     private static String username;
@@ -64,14 +64,14 @@ private static final String UUID =
 // Edit this all its ass . For those not me reading, crow = message Oculus = metadata of message
    public static String JsonBuilder(String senderUUID, String reciverUUID, String message){
         
-    JSONObject crow = new JSONObject();
-    crow.put("proginitor", senderUUID);
-    crow.put("message", message);
-    JSONObject Oculus = new JSONObject();
-    Oculus.put("timestamp", Instant.now().getEpochSecond());
-    Oculus.put("version", "1.0");
+    JSONObject crow = new JSONObject()
+    .put("proginitor", senderUUID)
+    .put("message", message);
+    JSONObject Oculus = new JSONObject()
+    .put("timestamp", Instant.now().getEpochSecond())
+    .put("version", "1.0");
     }
-
+    // Add the two JSONs together to create a newer combined, seperate allows a user to then use a message to specify the meta data
     // Client thread connect-other
     private static void connectToPeer(String ip, int port) {
         try {
