@@ -33,35 +33,51 @@ public class Phoebe {
         while (true) {
             String input = scanner.nextLine();
 
-            if (input.startsWith("/connect")) {
-                // Command format: /connect 127.0.0.1 6001
-                String[] parts = input.split(" ");
-                if (parts.length == 3) {
-                    String ip = parts[1];
-                    int port = Integer.parseInt(parts[2]);
+            if (input.trim().isEmpty()) continue;
+
+            String[] cmdCheck = input.split("",2);
+            String command = cmdCheck[0];    
+            switch (command) {
+                case "/connect":
+                    String[] con_parts = input.split(" ");
+                    if (con_parts.length == 3) {
+                    String ip = con_parts[1];
+                    int port = Integer.parseInt(con_parts[2]);
                     connectToPeer(ip, port);
                 } else {
                     System.out.println("Must contain: [IP] [PORT] ");//[PORT]Usage: /connect [IP] [PORT]");
                 }
-            } else {
-                // Normal chat message - Send to ALL connected peers
-                broadcast("[" + username + "]: " + input);
-            } 
-                if (input.startsWith("/message")) {
-                // /message [reciverUUID] [content]
-                String[] parts = input.split("input",3);
-                if (parts.length < 3) {
-                    System.out.println("Command: /message [Username to send to] [Content]");
-                } else {
-                    String reciverUUID = parts[1];
-                    String JsonContent = parts[2];
-                }
-                    // Call builder here, add Image sending code input here 
+                    break;
+                case "/message":
+                    String[] msg_parts = input.split("", 3);
+                    if (msg_parts.length < 3){
+                        System.out.println("/message [Username to send to] [Content]");
+                    } else {
+                        String receiverUUID = msg_parts[1];
+                        String content = msg_parts[2];
+                        // edit this with the JSON called for MSGs 
+                    }
+                    break;
+                    case "/image":
+                        String[] img_parts = input.split("",3);
+                        if (img_parts.length == 3){
+                            System.out.println("/image [Image] [Username to send to]");
+                        } 
+                        break;
+                    case "/help":
+                        System.out.println("Write listed commands and their features here.");
+                        break;
+                default:
+                    if (input.startsWith("/")){
+                        System.out.println("Command not recognised, type /help for listed commands.");
+                    } else{
+                        broadcast("["+ username + "]:" + input);
+                    }
+                    break;
             }
-        }
-    }
+        }}
 //Add Json Builder here
-// Edit this all its ass . For those not me reading, crow = message Oculus = metadata of message
+// Edit this all its ass . For those not me reading, crow = message Oculus = logs of message
    public static String JsonBuilder(String senderUUID, String reciverUUID, String message){
         
     JSONObject crow = new JSONObject()
@@ -69,7 +85,12 @@ public class Phoebe {
     .put("message", message);
     JSONObject Oculus = new JSONObject()
     .put("timestamp", Instant.now().getEpochSecond())
-    .put("version", "1.0");
+    .put("version", "1.0")
+    .put("Type", "type");  // type of message like normal msg or image
+    JSONObject Combined = new JSONObject()
+    .put("crow", crow)
+    .put("Oculus", Oculus);
+    return message; // change this its not returning anything atm
     }
     // Add the two JSONs together to create a newer combined, seperate allows a user to then use a message to specify the meta data
     // Client thread connect-other
