@@ -29,13 +29,13 @@ public class Phoebe {
         System.out.println("To send a message, just type it.");
         System.out.println("-------------------------------------------------");
 
-        // USER INPUT While case
+        //USER INPUT While case
         while (true) {
             String input = scanner.nextLine();
 
             if (input.trim().isEmpty()) continue;
 
-            String[] cmdCheck = input.split("",2);
+            String[] cmdCheck = input.split(" ",2);
             String command = cmdCheck[0];    
             switch (command) {
                 case "/connect":
@@ -45,11 +45,11 @@ public class Phoebe {
                     int port = Integer.parseInt(con_parts[2]);
                     connectToPeer(ip, port);
                 } else {
-                    System.out.println("Must contain: [IP] [PORT] ");//[PORT]Usage: /connect [IP] [PORT]");
+                    System.out.println("Must contain: [IP] [PORT] ");
                 }
                     break;
                 case "/message":
-                    String[] msg_parts = input.split("", 3);
+                    String[] msg_parts = input.split(" ", 3);
                     if (msg_parts.length < 3){
                         System.out.println("/message [Username to send to] [Content]");
                     } else {
@@ -59,7 +59,7 @@ public class Phoebe {
                     }
                     break;
                     case "/image":
-                        String[] img_parts = input.split("",3);
+                        String[] img_parts = input.split(" ",3);
                         if (img_parts.length == 3){
                             System.out.println("/image [Image] [Username to send to]");
                         } 
@@ -67,15 +67,23 @@ public class Phoebe {
                     case "/help":
                         System.out.println("Write listed commands and their features here.");
                         break;
-                default:
-                    if (input.startsWith("/")){
-                        System.out.println("Command not recognised, type /help for listed commands.");
-                    } else{
-                        broadcast("["+ username + "]:" + input);
+                    case "/exit":
+                        System.out.println("Closing Phoebe");
+                        System.exit(0);
+                        break; 
+               default:
+                   if (input.startsWith("/")){
+                       System.out.println("Command not recognised, type /help for listed commands.");
+                   } else{
+                       broadcast("["+ username + "]:" + input);
                     }
                     break;
             }
-        }}
+        
+        }
+    }
+// Add new commands above ^ always remember the gap between "" 
+
 //Add Json Builder here
 // Edit this all its ass . For those not me reading, crow = message Oculus = logs of message
    public static String JsonBuilder(String senderUUID, String reciverUUID, String message){
@@ -93,6 +101,12 @@ public class Phoebe {
     return message; // change this its not returning anything atm
     }
     // Add the two JSONs together to create a newer combined, seperate allows a user to then use a message to specify the meta data
+    
+    //Image sending command function here 
+    
+    
+    
+    
     // Client thread connect-other
     private static void connectToPeer(String ip, int port) {
         try {
