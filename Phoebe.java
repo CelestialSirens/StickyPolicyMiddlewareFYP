@@ -10,7 +10,7 @@ public class Phoebe {
     //private static final String UUID = UUID.randomUUID().toString(); // this is temp before DHT
 //private static final String UUID = 
     // List to keep track of all the people we are talking to : Change to DHT 
-    private static final List<PrintWriter> peers = Collections.synchronizedList(new ArrayList<>());
+    private static final List<Peer> peers = Collections.synchronizedList(new ArrayList<>());
     private static String username;
     public static void main(String[] args) throws IOException {
         Scanner scanner = new Scanner(System.in);
@@ -62,9 +62,13 @@ public class Phoebe {
                     break;
                     case "/image":
                         String[] img_parts = input.split(" ",3);
-                        if (img_parts.length == 3){
+                        if (img_parts.length < 3){
                             System.out.println("/image [Image] [Username to send to]");
-                        } 
+                        } else{
+                            String imagePath = img_parts[1];
+                            String receiver = img_parts[2];
+                            sendImage (imagePath, receiver); //edit name in a min
+                        }
                         break;
                     case "/help":
                         System.out.println("Write listed commands and their features here.");
@@ -103,6 +107,15 @@ public class Phoebe {
     }
     
     //Image sending command function here 
+
+    private static void sendImage(String imagePath, String recieverName){
+        try{
+            String b64 = imageToBase64(imagePath);
+
+        } catch (IOException e){
+            System.out.println("Failed to read image");
+        }
+    }
     
     // Make one function turning the image into a string 
     // Then another turning it back into an image
@@ -134,8 +147,8 @@ public class Phoebe {
     // Helper to send a message to everyone in the peers list
     private static void broadcast(String message) {
         synchronized (peers) {
-            for (PrintWriter out : peers) {
-                out.println(message);
+            for (Peer peer : peers) {
+                peer.out.println(message);
             }
         }
     }
@@ -195,4 +208,19 @@ public class Phoebe {
             }
         }
     }
+// info for broadcast stuff 
+    public static class Peer {
+        public final String username;
+        public final String ip;
+        public final int port;
+        public final PrintWriter out;
+
+        public Peer(String username, String ip, int port, PrintWriter out){
+            this.username =username;
+            this.ip = ip;
+            this.port = port;
+            this.out = out;
+        } 
+    }
+    
 }
