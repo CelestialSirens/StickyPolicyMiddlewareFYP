@@ -55,6 +55,8 @@ public class Phoebe {
                     } else {
                         String receiverUUID = msg_parts[1];
                         String content = msg_parts[2];
+                        String json = JsonBuilder(receiverUUID, receiverUUID, content);
+                        broadcast(json);
                         // edit this with the JSON called for MSGs 
                     }
                     break;
@@ -84,7 +86,6 @@ public class Phoebe {
     }
 // Add new commands above ^ always remember the gap between "" 
 
-//Add Json Builder here
 // Edit this all its ass . For those not me reading, crow = message Oculus = logs of message
    public static String JsonBuilder(String senderUUID, String reciverUUID, String message){
         
@@ -98,13 +99,13 @@ public class Phoebe {
     JSONObject Combined = new JSONObject()
     .put("crow", crow)
     .put("Oculus", Oculus);
-    return message; // change this its not returning anything atm
+    return Combined.toString(); // change this its not returning anything atm
     }
-    // Add the two JSONs together to create a newer combined, seperate allows a user to then use a message to specify the meta data
     
     //Image sending command function here 
     
-    
+    // Make one function turning the image into a string 
+    // Then another turning it back into an image
     
     
     // Client thread connect-other
