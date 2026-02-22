@@ -60,14 +60,14 @@ public class Phoebe {
                         // edit this with the JSON called for MSGs 
                     }
                     break;
-                    case "/image":
+                    case "/image": // change this since its no longer just image ^
                         String[] img_parts = input.split(" ",3);
                         if (img_parts.length < 3){
                             System.out.println("/image [Image] [Username to send to]");
                         } else{
                             String imagePath = img_parts[1];
                             String receiver = img_parts[2];
-                            sendImage (imagePath, receiver); //edit name in a min
+                          //  sendImage (imagePath, receiver); //edit name in a min
                         }
                         break;
                     case "/help":
@@ -108,16 +108,19 @@ public class Phoebe {
     
     //Image sending command function here 
 
-    private static void sendImage(String imagePath, String recieverName){
-        try{
-            String b64 = imageToBase64(imagePath);
+    // private static void sendFile(String filePath, String recieverName){
+    //     try{
+    //         String b64 = fileToBase64(filePath);
 
-        } catch (IOException e){
-            System.out.println("Failed to read image");
-        }
-    }
+    //     } catch (IOException e){
+    //         System.out.println("Failed to read image");
+    //     }
+    // }
     
     // Make one function turning the image into a string 
+    // public static String base64Tofile(String filePath) throws IOException{
+        
+    // }
     // Then another turning it back into an image
     
     
@@ -125,22 +128,22 @@ public class Phoebe {
     private static void connectToPeer(String ip, int port) {
         try {
             Socket socket = new Socket(ip, port);
-            setupStreams(socket);
+            PrintWriter out = new PrintWriter(socket.getOutputStream(),true);
+            out.println(username);
+            setupStreams(socket, out);
             System.out.println("Connected to peer at " + ip + ":" + port);
         } catch (IOException e) {
             System.out.println("Failed to connect to " + ip + ":" + port);
         }
     }
     // Stores the output stream and starts a listener thread for a new socket
-    private static void setupStreams(Socket socket) throws IOException {
-        // Output stream: used to send messages TO this peer
-        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-        
-        // Change this for DHT
-        peers.add(out);
 
-        // Input stream: used to listen for messages FROM this peer
-        // We start a new thread so we can listen to multiple peers at once
+    // New code processes username from connect->peer (for below)
+    private static void setupStreams(Socket socket, PrintWriter out) throws IOException {
+        peers.add(new Peer("defaultName", 
+        socket.getInetAddress().getHostAddress(), 
+        socket.getPort(), 
+        out));
         new Thread(new PeerHandler(socket, out)).start();
     }
 
@@ -181,8 +184,10 @@ public class Phoebe {
     // ------------------------------------------------------------
     // BACKGROUND TASK: LISTENS TO ONE SPECIFIC PEER
     // ------------------------------------------------------------
+
+    // this needs HEAVY editing, its the biggest connection
     private static class PeerHandler implements Runnable {
-        private Socket socket;
+        private Socket socket; 
         private BufferedReader in;
         private PrintWriter out;
 
@@ -195,15 +200,62 @@ public class Phoebe {
         @Override
         public void run() {
             try {
+                String senderUsername = in.readLine();
+                if (senderUsername == null) return;
+                synchronized(peers){
+                    for( Peer peer : peers){
+                        if (peer.out == out) {
+                            peers.remove(peer);
+                            peers.add(new Peer( 
+                                senderUsername, 
+                                socket.getInetAddress().getHostAddress(),
+                                socket.getPort(),
+                                out));
+                                break;
+                        }
+                    }
+                }
+                System.out.println("[Phoebe]:" + senderUsername + "has connected.");
                 String message;
                 while ((message = in.readLine()) != null) {
+                    try{
+                    JSONObject json = new JSONObject(message);
+                    JSONObject oculus = json.getJSONObject("oculus");
+                    JSONObject crow = json.getJSONObject("crow");
+
+                    String type = oculus.getString("type");
+                    String sender = crow.getString("proginator");
+                    String receiver = crow.getString("receiver");
+                    if (!receiver.equals(username) && !receiver.equals("all")) {
+                        continue;
+                    }
+                    switch (type) {
+                        case "text":
+                            System.out.println("[" + sender + "]: " + crow.getString("message"));
+                            break;
+
+                        case "file":
+                            String filename = crow.getString("filename");
+                            String fileData = crow.getString("message");
+                            String outputPath = "received_from_" + sender + "_" + filename;
+                            base64ToFile(fileData, outputPath);
+                            System.out.println("[" + sender + "] sent a file -> saved as " + outputPath);
+                            break;
+
+                        default:
+                            System.out.println("[" + sender + "] sent an unknown message type: " + type);
+                            break;
+                    }
+                  } catch (Exception e) {
+                    // Not JSON or malformed, print raw as fallback
                     System.out.println(message);
                 }
+            }
             } catch (IOException e) {
                 // Peer disconnected
             } finally {
-                System.out.println("A peer disconnected." );
-                peers.remove(out); // Remove from list so we don't send to dead socket
+                System.out.println("[Phoebe]: A peer disconnected." );
+                peers.removeIf(peer -> peer.out == out); // Maybe mention in report? Makes more accurate, https://www.w3schools.com/java/ref_arraylist_removeif.asp
                 try { socket.close(); } catch (IOException e) {}
             }
         }
