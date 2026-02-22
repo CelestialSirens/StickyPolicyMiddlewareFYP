@@ -5,6 +5,7 @@ import java.util.*;
 
 import org.json.JSONObject;
 import org.json.JSONObject.*;
+import java.nio.*; 
 
 public class Phoebe {
     //private static final String UUID = UUID.randomUUID().toString(); // this is temp before DHT
@@ -55,7 +56,7 @@ public class Phoebe {
                     } else {
                         String receiverUUID = msg_parts[1];
                         String content = msg_parts[2];
-                        String json = JsonBuilder(receiverUUID, receiverUUID, content);
+                        String json = JsonBuilder(receiverUUID, receiverUUID, content, "text", "");
                         broadcast(json);
                         // edit this with the JSON called for MSGs 
                     }
@@ -70,6 +71,8 @@ public class Phoebe {
                           //  sendImage (imagePath, receiver); //edit name in a min
                         }
                         break;
+                    case "/file": 
+                        break;  
                     case "/help":
                         System.out.println("Write listed commands and their features here.");
                         break;
@@ -91,11 +94,13 @@ public class Phoebe {
 // Add new commands above ^ always remember the gap between "" 
 
 // Edit this all its ass . For those not me reading, crow = message Oculus = logs of message
-   public static String JsonBuilder(String senderUUID, String reciverUUID, String message){
+   public static String JsonBuilder(String senderUsername, String reciverUsername, String message, String type, String fileName){
         
     JSONObject crow = new JSONObject()
-    .put("proginitor", senderUUID)
-    .put("message", message);
+    .put("proginitor", senderUsername)
+    .put("receiver", reciverUsername)
+    .put("message", message)
+    .put("filename", fileName);
     JSONObject Oculus = new JSONObject()
     .put("timestamp", Instant.now().getEpochSecond())
     .put("version", "1.0")
@@ -107,7 +112,10 @@ public class Phoebe {
     }
     
     //Image sending command function here 
+    private static void sendImag
 
+
+    // File sending & recieving functions 
     // private static void sendFile(String filePath, String recieverName){
     //     try{
     //         String b64 = fileToBase64(filePath);
@@ -233,12 +241,16 @@ public class Phoebe {
                         case "text":
                             System.out.println("[" + sender + "]: " + crow.getString("message"));
                             break;
-
+                        case "image":
+                            String imgFilename = crow.getString("imgFilename");
+                            String imgData = crow.getString("imgFilename");
+                            // add ref to img -> b64 here
+                            break;
                         case "file":
-                            String filename = crow.getString("filename");
+                            String fileFilename = crow.getString("filename");
                             String fileData = crow.getString("message");
-                            String outputPath = "received_from_" + sender + "_" + filename;
-                            base64ToFile(fileData, outputPath);
+                            String outputPath = "received_from_" + sender + "_" + fileFilename;
+                            // base64ToFile(fileData, outputPath);   actually make this 
                             System.out.println("[" + sender + "] sent a file -> saved as " + outputPath);
                             break;
 
