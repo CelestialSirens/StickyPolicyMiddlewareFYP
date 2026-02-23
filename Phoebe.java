@@ -97,17 +97,17 @@ public class Phoebe {
    public static String JsonBuilder(String senderUsername, String reciverUsername, String message, String type, String fileName){
         
     JSONObject crow = new JSONObject()
-    .put("proginitor", senderUsername)
+    .put("proginator", senderUsername)
     .put("receiver", reciverUsername)
     .put("message", message)
     .put("filename", fileName);
     JSONObject Oculus = new JSONObject()
     .put("timestamp", Instant.now().getEpochSecond())
     .put("version", "1.0")
-    .put("Type", "type");  // type of message like normal msg or image
+    .put("type", "type");  // type of message like normal msg or image
     JSONObject Combined = new JSONObject()
     .put("crow", crow)
-    .put("Oculus", Oculus);
+    .put("oculus", Oculus);
     return Combined.toString(); // change this its not returning anything atm
     }
     
@@ -180,7 +180,8 @@ public class Phoebe {
                 while (true) {
                     Socket socket = serverSocket.accept();
                     // When someone connects, set up the streams
-                    setupStreams(socket);
+                    PrintWriter out = new PrintWriter(socket.getOutputStream(),true);
+                    setupStreams(socket,out);
                     System.out.println("A new peer has connected to you!");
                 }
             } catch (IOException e) {
@@ -231,13 +232,13 @@ public class Phoebe {
                     JSONObject oculus = json.getJSONObject("oculus");
                     JSONObject crow = json.getJSONObject("crow");
 
-                    String type = oculus.getString("type");
+                    String typeOfData = oculus.getString("type of data");
                     String sender = crow.getString("proginator");
                     String receiver = crow.getString("receiver");
                     if (!receiver.equals(username) && !receiver.equals("all")) {
                         continue;
                     }
-                    switch (type) {
+                    switch (typeOfData) { 
                         case "text":
                             System.out.println("[" + sender + "]: " + crow.getString("message"));
                             break;
@@ -250,12 +251,12 @@ public class Phoebe {
                             String fileFilename = crow.getString("filename");
                             String fileData = crow.getString("message");
                             String outputPath = "received_from_" + sender + "_" + fileFilename;
-                            // base64ToFile(fileData, outputPath);   actually make this 
+                            // base64ToFile(fileData, outputPath);   actually make this     
                             System.out.println("[" + sender + "] sent a file -> saved as " + outputPath);
                             break;
 
                         default:
-                            System.out.println("[" + sender + "] sent an unknown message type: " + type);
+                            System.out.println("[" + sender + "] sent an unknown message type: " + typeOfData);
                             break;
                     }
                   } catch (Exception e) {
