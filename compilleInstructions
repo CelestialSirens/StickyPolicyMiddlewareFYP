@@ -1,0 +1,7 @@
+
+
+Wjavac -cp "." Phoebe.java PeerHandler.java utils/fileConversions.java
+```
+If wanting the file convert code to actually compille with main.
+
+Add the DHT.java file the same way eventually when that runs.

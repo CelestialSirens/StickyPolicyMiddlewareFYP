@@ -1,12 +1,16 @@
 import java.io.*;
+import java.nio.*;
 import java.net.*;
 import java.time.Instant;
 import java.util.*;
 import org.json.JSONObject;
 import org.json.JSONObject.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Base64;
  
 
-public class Phoebe {
+public class Phoebe {   
     //private static final String UUID = UUID.randomUUID().toString(); // this is temp before DHT
 //private static final String UUID = 
     // List to keep track of all the people we are talking to : Change to DHT 
@@ -177,6 +181,33 @@ public class Phoebe {
             }
         }
     }
+
+
+
+       // Below here is all background tasks 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     // ------------------------------------------------------------
     // BACKGROUND TASK: WAITS FOR INCOMING CONNECTIONS
