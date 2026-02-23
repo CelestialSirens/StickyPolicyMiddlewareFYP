@@ -38,10 +38,11 @@ Meta data found attatched to the data sent is then processed once a user recieve
 
 # Features
   - Allows for either group based or 1 - 1 file transfer
-  - Allows a robust selection of file types to be transfered including  PNG, PDF, JPEG, [ADD OTHERS WHEN DONE]
-  - Features a basic GUI [Show proof when done]
 
-
+## In development features
+  - GUI
+  - DHT based communication , either based on tomp2p or a simple handmade version .
+  - Robust selection of file types to be transfered including  PNG, PDF, JPEG, [ADD OTHERS WHEN DONE]
 
 
 # Usage
