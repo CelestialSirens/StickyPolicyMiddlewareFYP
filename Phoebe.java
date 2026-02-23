@@ -2,10 +2,9 @@ import java.io.*;
 import java.net.*;
 import java.time.Instant;
 import java.util.*;
-
 import org.json.JSONObject;
 import org.json.JSONObject.*;
-import java.nio.*; 
+ 
 
 public class Phoebe {
     //private static final String UUID = UUID.randomUUID().toString(); // this is temp before DHT
@@ -57,7 +56,7 @@ public class Phoebe {
                         String receiverUUID = msg_parts[1];
                         String content = msg_parts[2];
                         String json = JsonBuilder(receiverUUID, receiverUUID, content, "text", "");
-                        broadcast(json);
+                        sendTo(receiverUUID, json);
                         // edit this with the JSON called for MSGs 
                     }
                     break;
@@ -92,9 +91,24 @@ public class Phoebe {
         }
     }
 // Add new commands above ^ always remember the gap between "" 
+// Checks target is real and ACTUALLY dm's only to them
+    private static boolean sendTo(String targetName, String message){
+        synchronized(peers){
+            for (Peer peer:peers){
+                if (peer.username.equals(targetName)){
+                    peer.out.println(message);
+                    return true;
+                }
+            }
+        }
+        System.out.println("[Phoebe]: User"+ targetName + "Not found");
+        return false;
+    }
 
+
+    // -- Json Code below -- 
 // Edit this all its ass . For those not me reading, crow = message Oculus = logs of message
-   public static String JsonBuilder(String senderUsername, String reciverUsername, String message, String type, String fileName){
+   public static String JsonBuilder(String senderUsername, String reciverUsername, String message, String typeOfData, String fileName){
         
     JSONObject crow = new JSONObject()
     .put("proginator", senderUsername)
@@ -104,7 +118,7 @@ public class Phoebe {
     JSONObject Oculus = new JSONObject()
     .put("timestamp", Instant.now().getEpochSecond())
     .put("version", "1.0")
-    .put("type", "type");  // type of message like normal msg or image
+    .put("type", typeOfData);  // type of message like normal msg or image
     JSONObject Combined = new JSONObject()
     .put("crow", crow)
     .put("oculus", Oculus);
@@ -112,7 +126,7 @@ public class Phoebe {
     }
     
     //Image sending command function here 
-    private static void sendImag
+    // private static void sendImag
 
 
     // File sending & recieving functions 
@@ -224,7 +238,7 @@ public class Phoebe {
                         }
                     }
                 }
-                System.out.println("[Phoebe]:" + senderUsername + "has connected.");
+                System.out.println("[Phoebe]:" + senderUsername + "" + "has connected.");
                 String message;
                 while ((message = in.readLine()) != null) {
                     try{
