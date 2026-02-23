@@ -123,7 +123,6 @@ public class Phoebe {
     .put("filename", fileName);
     JSONObject Oculus = new JSONObject()
     .put("timestamp", Instant.now().getEpochSecond())
-    .put("version", "1.0")
     .put("type", typeOfData);  // type of message like normal msg or image
     JSONObject Combined = new JSONObject()
     .put("crow", crow)
