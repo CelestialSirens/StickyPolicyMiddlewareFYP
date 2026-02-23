@@ -130,28 +130,8 @@ public class Phoebe {
     .put("oculus", Oculus);
     return Combined.toString(); // change this its not returning anything atm
     }
-    
-    //Image sending command function here 
-    // private static void sendImag
+    // Conversion code moved to other class. 
 
-
-    // File sending & recieving functions 
-    // private static void sendFile(String filePath, String recieverName){
-    //     try{
-    //         String b64 = fileToBase64(filePath);
-
-    //     } catch (IOException e){
-    //         System.out.println("Failed to read image");
-    //     }
-    // }
-    
-    // Make one function turning the image into a string 
-    // public static String base64Tofile(String filePath) throws IOException{
-        
-    // }
-    // Then another turning it back into an image
-    
-    
     // Client thread connect-other
     private static void connectToPeer(String ip, int port) {
         try {
