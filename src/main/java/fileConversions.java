@@ -1,6 +1,7 @@
 
 import java.util.Base64;
 import java.util.HashSet;
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.nio.file.Files;
@@ -39,9 +40,26 @@ public class fileConversions {
     // << -- Image conversion code -- >>
 
     public static String imageToB64 (String filePath) throws IOException{
-        
+        byte[] bytes = Files.readAllBytes(Paths.get(filePath));
+        return Base64.getEncoder().encodeToString(bytes);
     }
 
+    public static void B64ToImage (String sender, String base64, String fileName) throws IOException{
+        String dir = "phoebe_recieved/" + sender;
+        new File(dir).mkdirs();
+        byte[] bytes = Base64.getDecoder().decode(base64);
+        Files.write(Paths.get(dir + "/" + fileName),bytes);
+        System.out.println("[FileConverter]: Image saved to " + dir + "/" + fileName);
+    }
+
+
+
+
+
+    // << -- File conversion code -->>
+
+    // Just copy the same code above into new classes meant for files 
+   
 
 
 }
