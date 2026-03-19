@@ -9,7 +9,6 @@ import org.json.JSONObject;
 import org.json.JSONObject.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Base64;
  
 
 public class Phoebe {   
@@ -69,14 +68,18 @@ public class Phoebe {
                     case "/image": // change this since its no longer just image ^
                         String[] img_parts = input.split(" ",3);
                         if (img_parts.length < 3){
-                            System.out.println("/image [Image] [Username to send to]");
+                            System.out.println("/image [filepath] [Username to send to]");
                         } else{
-                            String imagePath = img_parts[1];
-                            String receiver = img_parts[2];
-                          //  sendImage (imagePath, receiver); //edit name in a min
+                          //  sendImg (img_parts[1], img_parts[2]); //edit name in a min. As sendImg doesnt exist still
                         }
                         break;
                     case "/file": 
+                    String[] file_parts = input.split(" ",3);
+                        if (file_parts.length < 3){
+                            System.out.println("/file [filepath] [Username to send to]");
+                        } else{
+                          //  sendFile (file_parts[1], file_parts[2]); //edit name in a min. As sendFile doesnt exist still
+                        }
                         break;  
                     case "/help":
                         System.out.println("Write listed commands and their features here.");
@@ -269,11 +272,13 @@ public class Phoebe {
                             System.out.println("[" + sender + "]: " + crow.getString("message"));
                             break;
                         case "image":
-                            String imgFilename = crow.getString("imgFilename");
-                            String imgData = crow.getString("imgFilename");
-                            // add ref to img -> b64 here
+                            fileConversions.B64ToImage(
+                                crow.getString("message"),
+                                crow.getString("fileName"),
+                                sender
+                            );
                             break;
-                        case "file":
+                        case "file":   // do same as ^ when this one is made
                             String fileFilename = crow.getString("filename");
                             String fileData = crow.getString("message");
                             String outputPath = "received_from_" + sender + "_" + fileFilename;

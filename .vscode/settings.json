@@ -4,5 +4,6 @@
         "json-20240303.jar",
         "c:\\Users\\Taugh\\Downloads\\json-20240303.jar"
     ],
-    "java.configuration.updateBuildConfiguration": "interactive"
+    "java.configuration.updateBuildConfiguration": "interactive",
+    "chat.agent.enabled": true
 }
