@@ -130,7 +130,7 @@ public class Phoebe {
     JSONObject Combined = new JSONObject()
     .put("crow", crow)
     .put("oculus", Oculus);
-    return Combined.toString(); // change this its not returning anything atm
+    return Combined.toString(); 
     }
     // Conversion code moved to other class. 
 
@@ -261,7 +261,7 @@ public class Phoebe {
                     JSONObject oculus = json.getJSONObject("oculus");
                     JSONObject crow = json.getJSONObject("crow");
 
-                    String typeOfData = oculus.getString("type of data");
+                    String typeOfData = oculus.getString("type");
                     String sender = crow.getString("proginator");
                     String receiver = crow.getString("receiver");
                     if (!receiver.equals(username) && !receiver.equals("all")) {
