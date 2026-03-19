@@ -60,7 +60,7 @@ public class Phoebe {
                     } else {
                         String receiverUUID = msg_parts[1];
                         String content = msg_parts[2];
-                        String json = JsonBuilder(receiverUUID, receiverUUID, content, "text", "");
+                        String json = JsonBuilder(username, receiverUUID, content, "text", "");
                         sendTo(receiverUUID, json);
                         // edit this with the JSON called for MSGs 
                     }
