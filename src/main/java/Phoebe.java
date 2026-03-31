@@ -83,8 +83,8 @@ public class Phoebe {
                         System.out.println("Allow user to read? (yes or no):");
                         String imgReadAllow = scanner.nextLine().trim();
                         boolean imgRead = imgReadAllow.isEmpty() || imgReadAllow.equalsIgnoreCase("yes");
-                        if (!imgRead) { System.out.println("([Phoebe]: Read isn't allowed, ending command.)");}
-                        System.out.println("Expiry date/time ( dd/mm/yyyy HH:mm UTC, or leave empty for no expire");
+                        if (!imgRead) { System.out.println("([Phoebe]: Read isn't allowed, ending command.)"); break;}
+                        System.out.println("Expiry date/time ( DD/MM/YYYY HH:mm UTC, or leave empty for no expire");
                         String imgExpiry = scanner.nextLine().trim();
                         StickyPolicy imgPolicy = new StickyPolicy.Builder()
                             .allowRead(imgRead)
@@ -101,25 +101,28 @@ public class Phoebe {
                         break;
 
                     case "/file": 
-                        System.err.println("");
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+                        System.out.println("Filepath:");
+                        String fileFilePath = scanner.nextLine().trim();
+                        System.out.println("Send To:");
+                        String fileReciever = scanner.nextLine().trim();
+                        System.out.println("Allow user to read? (yes or no):");
+                        String fileReadAllow = scanner.nextLine().trim();
+                        boolean fileRead = fileReadAllow.isEmpty() || fileReadAllow.equalsIgnoreCase("yes");
+                        if (!fileRead) { System.out.println("([Phoebe]: Read isn't allowed, ending command.)"); break;}
+                        System.out.println("Expiry date/time ( DD/MM/YYYY HH:mm UTC, or leave empty for no expire");
+                        String fileExpiry = scanner.nextLine().trim();
+                        StickyPolicy filePolicy = new StickyPolicy.Builder()
+                            .allowRead(fileRead)
+                            .expiryFromInput(fileExpiry)
+                            .build();
+                        try {
+                            String ext = fileConversions.getExtension(fileFilePath);
+                            String b64 = fileConversions.fileToB64(fileFilePath); 
+                            String fileJson = JsonBuilder(username, fileReciever, b64, "file", ext, filePolicy);
+                            sendTo(fileReciever, fileJson);
+                        } catch (Exception e) {
+                            System.out.println("[Phoebe]: "+ e.getMessage());
+                        }
                         break;  
                     case "/help":
                         System.out.println("Write listed commands and their features here.");
@@ -139,7 +142,6 @@ public class Phoebe {
         
         }
     }
-// Add new commands above ^ always remember the gap between "" 
 // Checks target is real and ACTUALLY dm's only to them
     private static boolean sendTo(String targetName, String message){
         synchronized(peers){
@@ -168,7 +170,7 @@ public class Phoebe {
     JSONObject Oculus = new JSONObject()
     .put("timestamp", Instant.now().getEpochSecond())
     .put("type", typeOfData)  // type of message like normal msg or image
-    .put("policy", policy.toJson());
+    .put("policy", policy.toJSON());
 
     JSONObject Combined = new JSONObject()
     .put("crow", crow)
@@ -282,6 +284,9 @@ public class Phoebe {
                     }
                     switch (typeOfData) { 
                         case "text":
+                            StickyPolicy policy = StickyPolicy.fromJSON(oculus.getJSONObject("policy"));
+                            PolicyEnforcer enforcer = new PolicyEnforcer(policy);
+                            if (!enforcer.canRead()) break;
                             System.out.println("[" + sender + "]: " + crow.getString("message"));
                             break;
                         case "image":
@@ -331,10 +336,10 @@ public class Phoebe {
             this.out = out;
         } 
     }
-    public static class policyEnforcer {
+    public static class PolicyEnforcer {
         private final StickyPolicy policy;
 
-        public policyEnforcer(StickyPolicy policy){
+        public PolicyEnforcer(StickyPolicy policy){
             this.policy = policy;
         }
 

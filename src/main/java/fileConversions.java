@@ -45,18 +45,27 @@ public class fileConversions {
     }
 
     public static void B64ToImage (String sender, String base64, String fileName) throws IOException{
-        String dir = "phoebe_recieved/" + sender;
+        String dir = "Phoebe_recieved/" + sender;
         new File(dir).mkdirs();
         byte[] bytes = Base64.getDecoder().decode(base64);
         Files.write(Paths.get(dir + "/" + fileName),bytes);
         System.out.println("[FileConverter]: Image saved to " + dir + "/" + fileName);
     }
 
-
-
-
-
     // << -- File conversion code -->>
+
+    public static String fileToB64 (String filePath) throws IOException{
+        byte[] bytes = Files.readAllBytes(Paths.get(filePath));
+        return Base64.getEncoder().encodeToString(bytes);
+    }
+
+    public static void B64ToFile (String sender, String base64, String fileName) throws IOException{
+        String dir = "Phoebe_recieved/" + sender;
+        new File(dir).mkdirs();
+        byte[] bytes = Base64.getDecoder().decode(base64);
+        Files.write(Paths.get(dir + "/" + fileName), bytes);
+        System.out.println("[FileConverter]: File saved to" + dir + "/" + fileName);
+    }
 
     // Just copy the same code above into new classes meant for files 
    

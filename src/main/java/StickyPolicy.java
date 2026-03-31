@@ -23,7 +23,7 @@ public class StickyPolicy {
                 client.setDefaultTimeout(5000);
                 InetAddress hostAddr = InetAddress.getByName("pool.ntp.org");
                 TimeInfo info = client.getTime(hostAddr);
-                long ntpTime = info.getMessage().getTransmitTimeStamp().getTime() / 5000;
+                long ntpTime = info.getMessage().getTransmitTimeStamp().getTime() / 1000;
                 client.close();
                 return ntpTime > expiryEpoch;
             } catch (Exception e) {
@@ -63,7 +63,7 @@ public class StickyPolicy {
                     this.expiryEpoch = 0;
                     return this;
                 }
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/mm/yyyy HH:mm");
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("DD/MM/YYYY HH:mm");
                 LocalDateTime dateTime = LocalDateTime.parse(input.trim(), formatter);
                 this.expiryEpoch = dateTime.toEpochSecond(ZoneOffset.UTC);
                 return this;
