@@ -64,7 +64,7 @@ public class Phoebe {
                         boolean read = isReadAllow.isEmpty() || isReadAllow.equalsIgnoreCase("yes");
                             if (!read) { System.out.println("([Phoebe]: Read isn't allowed, ending command.)"); break;}
                         
-                        System.out.println("Expiry date/time ( dd/mm/yyyy HH:mm UTC, or leave empty for no expire)");   // <--- Maybe change this to have a check feature of what timezone they want./
+                        System.out.println("Expiry date/time ( DD/MM/YYYY HH:mm UTC, or leave empty for no expire)");   // <--- Maybe change this to have a check feature of what timezone they want./
                         String expiryInput = scanner.nextLine().trim();
 
                         StickyPolicy policy = new StickyPolicy.Builder()
@@ -165,7 +165,7 @@ public class Phoebe {
     .put("proginator", senderUsername)
     .put("receiver", reciverUsername)
     .put("message", message)
-    .put("filename", fileName);
+    .put("fileName", fileName);
 
     JSONObject Oculus = new JSONObject()
     .put("timestamp", Instant.now().getEpochSecond())
@@ -290,6 +290,10 @@ public class Phoebe {
                             System.out.println("[" + sender + "]: " + crow.getString("message"));
                             break;
                         case "image":
+                            StickyPolicy imgPolicy = StickyPolicy.fromJSON(oculus.getJSONObject("policy"));
+                            PolicyEnforcer imgEnforcer = new PolicyEnforcer(imgPolicy);
+                            if (!imgEnforcer.canRead()) break; 
+                            System.out.println("["+ sender +"]: " + "send an image");
                             fileConversions.B64ToImage(
                                 sender,
                                 crow.getString("message"),
@@ -297,11 +301,15 @@ public class Phoebe {
                             );
                             break;
                         case "file":   // do same as ^ when this one is made
-                            String fileFilename = crow.getString("filename");
-                            String fileData = crow.getString("message");
-                            String outputPath = "received_from_" + sender + "_" + fileFilename;
-                            // base64ToFile(fileData, outputPath);   actually make this     
-                            System.out.println("[" + sender + "] sent a file -> saved as " + outputPath);
+                            StickyPolicy filePolicy = StickyPolicy.fromJSON(oculus.getJSONObject("policy"));
+                            PolicyEnforcer fileEnforcer = new PolicyEnforcer(filePolicy);
+                            if (!fileEnforcer.canRead()) break; 
+                            System.out.println("["+ sender +"]: " + "send a file");
+                            fileConversions.B64ToFile(
+                                sender,
+                                crow.getString("message"),
+                                crow.getString("fileName")
+                            );
                             break;
 
                         default:
@@ -345,11 +353,11 @@ public class Phoebe {
 
         public boolean canRead(){
             if (policy.isExpired()){
-                System.out.println(".()");
+                System.out.println("[Phoebe]: Message Blocked: Permissions have expired");
                 return false;
             }
             if (!policy.canRead()){
-                System.out.println("Cant read, guess your illiterate. <-- change lol");
+                System.out.println("[Phoebe]: Message Blocked: No read permissions granted");
                 return  false;
             }
             return true;
