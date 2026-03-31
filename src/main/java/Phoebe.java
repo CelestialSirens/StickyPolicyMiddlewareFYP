@@ -12,7 +12,7 @@ import java.nio.file.Paths;
  
 
 public class Phoebe {   
-    //private static final String UUID = UUID.randomUUID().toString(); // this is temp before DHT
+//private static final String UUID = UUID.randomUUID().toString(); // this is temp before DHT
 //private static final String UUID = 
     // List to keep track of all the people we are talking to : Change to DHT 
     private static final List<Peer> peers = Collections.synchronizedList(new ArrayList<>());
@@ -54,7 +54,10 @@ public class Phoebe {
                 }
                     break;
                 case "/message":
-                    String[] msg_parts = input.split(" ", 3);
+
+
+                
+                    /*String[] msg_parts = input.split(" ", 3);
                     if (msg_parts.length < 3){
                         System.out.println("/message [Username to send to] [Content]");
                     } else {
@@ -63,14 +66,14 @@ public class Phoebe {
                         String json = JsonBuilder(username, receiverUUID, content, "text", "");
                         sendTo(receiverUUID, json);
                         // edit this with the JSON called for MSGs 
-                    }
+                    }*/
                     break;
                     case "/image": // change this since its no longer just image ^
                         String[] img_parts = input.split(" ",3);
                         if (img_parts.length < 3){
                             System.out.println("/image [filepath] [Username to send to]");
                         } else{
-                          //  sendImg (img_parts[1], img_parts[2]); //edit name in a min. As sendImg doesnt exist still
+                          //  sendImg (img_parts[1], img_parts[2]); //edit name  As sendImg doesnt exist still
                         }
                         break;
                     case "/file": 
@@ -78,7 +81,7 @@ public class Phoebe {
                         if (file_parts.length < 3){
                             System.out.println("/file [filepath] [Username to send to]");
                         } else{
-                          //  sendFile (file_parts[1], file_parts[2]); //edit name in a min. As sendFile doesnt exist still
+                          //  sendFile (file_parts[1], file_parts[2]); //edit name  As sendFile doesnt exist still
                         }
                         break;  
                     case "/help":
@@ -117,16 +120,19 @@ public class Phoebe {
 
     // -- Json Code below -- 
 // Edit this all its ass . For those not me reading, crow = message Oculus = logs of message
-   public static String JsonBuilder(String senderUsername, String reciverUsername, String message, String typeOfData, String fileName){
+   public static String JsonBuilder(String senderUsername, String reciverUsername, String message, String typeOfData, String fileName, StickyPolicy policy){
         
     JSONObject crow = new JSONObject()
     .put("proginator", senderUsername)
     .put("receiver", reciverUsername)
     .put("message", message)
     .put("filename", fileName);
+
     JSONObject Oculus = new JSONObject()
     .put("timestamp", Instant.now().getEpochSecond())
-    .put("type", typeOfData);  // type of message like normal msg or image
+    .put("type", typeOfData)  // type of message like normal msg or image\
+    .put("policy", policy.toJson());
+
     JSONObject Combined = new JSONObject()
     .put("crow", crow)
     .put("oculus", Oculus);
@@ -168,34 +174,9 @@ public class Phoebe {
 
 
 
-       // Below here is all background tasks 
 
+    // BACKGROUND TASK: Listening for clients
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // ------------------------------------------------------------
-    // BACKGROUND TASK: WAITS FOR INCOMING CONNECTIONS
-    // ------------------------------------------------------------
     private static class ServerTask implements Runnable {
         private int port;
 
@@ -219,9 +200,7 @@ public class Phoebe {
         }
     }
 
-    // ------------------------------------------------------------
-    // BACKGROUND TASK: LISTENS TO ONE SPECIFIC PEER
-    // ------------------------------------------------------------
+    // BACKGROUND TASK: Listening to dm client  -- need to make test on this ::::::::::::
 
     // this needs HEAVY editing, its the biggest connection
     private static class PeerHandler implements Runnable {
@@ -317,6 +296,10 @@ public class Phoebe {
             this.port = port;
             this.out = out;
         } 
+    }
+    public static class policyEnforcer(){
+        private final StickyPolicy policy;
+
     }
     
 }
