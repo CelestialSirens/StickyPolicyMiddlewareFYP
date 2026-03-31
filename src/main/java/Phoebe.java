@@ -54,35 +54,72 @@ public class Phoebe {
                 }
                     break;
                 case "/message":
+                        System.out.print("Send to:");
+                        String recieverUUID = scanner.nextLine().trim();
+                        System.out.print("Message to end:");
+                        String content = scanner.nextLine().trim();
+                        System.out.println("Set Policy requirements (spam enter if none needed)");
+                        System.out.println("Allow user to read? (yes or no):");  // if no just ends the process
+                        String isReadAllow = scanner.nextLine().trim();
+                        boolean read = isReadAllow.isEmpty() || isReadAllow.equalsIgnoreCase("yes");
+                            if (!read) { System.out.println("([Phoebe]: Read isn't allowed, ending command.)"); break;}
+                        
+                        System.out.println("Expiry date/time ( dd/mm/yyyy HH:mm UTC, or leave empty for no expire)");   // <--- Maybe change this to have a check feature of what timezone they want./
+                        String expiryInput = scanner.nextLine().trim();
 
+                        StickyPolicy policy = new StickyPolicy.Builder()
+                            .allowRead(read)
+                            .expiryFromInput(expiryInput)
+                            .build();
 
-                
-                    /*String[] msg_parts = input.split(" ", 3);
-                    if (msg_parts.length < 3){
-                        System.out.println("/message [Username to send to] [Content]");
-                    } else {
-                        String receiverUUID = msg_parts[1];
-                        String content = msg_parts[2];
-                        String json = JsonBuilder(username, receiverUUID, content, "text", "");
-                        sendTo(receiverUUID, json);
-                        // edit this with the JSON called for MSGs 
-                    }*/
+                        sendTo(recieverUUID, JsonBuilder(username, recieverUUID, content, "text", "", policy));
                     break;
-                    case "/image": // change this since its no longer just image ^
-                        String[] img_parts = input.split(" ",3);
-                        if (img_parts.length < 3){
-                            System.out.println("/image [filepath] [Username to send to]");
-                        } else{
-                          //  sendImg (img_parts[1], img_parts[2]); //edit name  As sendImg doesnt exist still
+
+                    case "/image": 
+                        System.out.println("Filepath:");
+                        String imgPath = scanner.nextLine().trim();
+                        System.out.println("Send To:");
+                        String imgReciever = scanner.nextLine().trim();
+                        System.out.println("Allow user to read? (yes or no):");
+                        String imgReadAllow = scanner.nextLine().trim();
+                        boolean imgRead = imgReadAllow.isEmpty() || imgReadAllow.equalsIgnoreCase("yes");
+                        if (!imgRead) { System.out.println("([Phoebe]: Read isn't allowed, ending command.)");}
+                        System.out.println("Expiry date/time ( dd/mm/yyyy HH:mm UTC, or leave empty for no expire");
+                        String imgExpiry = scanner.nextLine().trim();
+                        StickyPolicy imgPolicy = new StickyPolicy.Builder()
+                            .allowRead(imgRead)
+                            .expiryFromInput(imgExpiry)
+                            .build();
+                        try {
+                            String ext = fileConversions.getExtension(imgPath);
+                            String b64 = fileConversions.imageToB64(imgPath);
+                            String imgJson = JsonBuilder(username, imgReciever, b64, "image", ext, imgPolicy);
+                            sendTo(imgReciever, imgJson);
+                        } catch (Exception e) {
+                            System.out.println("[Phoebe]: "+ e.getMessage());
                         }
                         break;
+
                     case "/file": 
-                    String[] file_parts = input.split(" ",3);
-                        if (file_parts.length < 3){
-                            System.out.println("/file [filepath] [Username to send to]");
-                        } else{
-                          //  sendFile (file_parts[1], file_parts[2]); //edit name  As sendFile doesnt exist still
-                        }
+                        System.err.println("");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                         break;  
                     case "/help":
                         System.out.println("Write listed commands and their features here.");
@@ -130,7 +167,7 @@ public class Phoebe {
 
     JSONObject Oculus = new JSONObject()
     .put("timestamp", Instant.now().getEpochSecond())
-    .put("type", typeOfData)  // type of message like normal msg or image\
+    .put("type", typeOfData)  // type of message like normal msg or image
     .put("policy", policy.toJson());
 
     JSONObject Combined = new JSONObject()
@@ -152,7 +189,6 @@ public class Phoebe {
             System.out.println("Failed to connect to " + ip + ":" + port);
         }
     }
-    // Stores the output stream and starts a listener thread for a new socket
 
     // New code processes username from connect->peer (for below)
     private static void setupStreams(Socket socket, PrintWriter out) throws IOException {
@@ -171,8 +207,6 @@ public class Phoebe {
             }
         }
     }
-
-
 
 
     // BACKGROUND TASK: Listening for clients
@@ -252,9 +286,9 @@ public class Phoebe {
                             break;
                         case "image":
                             fileConversions.B64ToImage(
+                                sender,
                                 crow.getString("message"),
-                                crow.getString("fileName"),
-                                sender
+                                crow.getString("fileName")
                             );
                             break;
                         case "file":   // do same as ^ when this one is made
@@ -297,9 +331,29 @@ public class Phoebe {
             this.out = out;
         } 
     }
-    public static class policyEnforcer(){
+    public static class policyEnforcer {
         private final StickyPolicy policy;
 
-    }
-    
+        public policyEnforcer(StickyPolicy policy){
+            this.policy = policy;
+        }
+
+        public boolean canRead(){
+            if (policy.isExpired()){
+                System.out.println(".()");
+                return false;
+            }
+            if (!policy.canRead()){
+                System.out.println("Cant read, guess your illiterate. <-- change lol");
+                return  false;
+            }
+            return true;
+        }
+
+
+        // public boolean canForward(){
+        //   if ()}
+     
+
+}
 }
