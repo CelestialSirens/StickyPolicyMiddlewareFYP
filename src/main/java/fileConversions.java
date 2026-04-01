@@ -66,9 +66,4 @@ public class fileConversions {
         Files.write(Paths.get(dir + "/" + fileName), bytes);
         System.out.println("[FileConverter]: File saved to" + dir + "/" + fileName);
     }
-
-    // Just copy the same code above into new classes meant for files 
-   
-
-
 }

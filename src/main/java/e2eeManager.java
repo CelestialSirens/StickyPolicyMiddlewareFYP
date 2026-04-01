@@ -28,5 +28,22 @@ public class e2eeManager {
         this.sharedSecret = new SecretKeySpec(keyBytes, "AES");
     }
      
-    
+    // encrypt function 
+        
+
+
+
+
+
+
+
+
+
+
+
+
+    // decrypt function
+
+
+
 }
