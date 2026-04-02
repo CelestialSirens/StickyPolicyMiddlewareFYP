@@ -5,3 +5,36 @@ Wjavac -cp "." Phoebe.java PeerHandler.java utils/fileConversions.java
 If wanting the file convert code to actually compille with main.
 
 Add the DHT.java file the same way eventually when that runs.
+
+
+
+
+``` 
+
+# only viable on a windows machine this is NOT a dev kit on linux
+
+# Phoebe Dev Environment Setup
+# Run as Administrator in PowerShell
+$jdkPath = Get-ChildItem "C:\Program Files\Microsoft" -Filter "jdk-*" -ErrorAction SilentlyContinue | Sort-Object Name -Descending | Select-Object -First 1 -ExpandProperty FullName
+
+if ($jdkPath) {
+    [System.Environment]::SetEnvironmentVariable("JAVA_HOME", $jdkPath, "Machine")
+    $currentPath = [System.Environment]::GetEnvironmentVariable("PATH", "Machine")
+    [System.Environment]::SetEnvironmentVariable("PATH", $currentPath + ";" + $jdkPath + "\bin", "Machine")
+    Write-Host "JAVA_HOME set to $jdkPath"
+} else {
+    Write-Host "No JDK found"
+}
+
+$mvnPath = "C:\Program Files\Maven\apache-maven-3.9.14\bin"
+if (Test-Path $mvnPath) {
+    $currentPath = [System.Environment]::GetEnvironmentVariable("PATH", "Machine")
+    [System.Environment]::SetEnvironmentVariable("PATH", $currentPath + ";" + $mvnPath, "Machine")
+    Write-Host "Maven added to PATH"
+} else {
+    Write-Host "Maven not found"
+}
+
+Write-Host "Done - restart your terminal"
+
+# This is getting removed before dissertation sent
