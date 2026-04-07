@@ -3,13 +3,13 @@ import java.util.Base64;
 import java.util.HashSet;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Array;
+//import java.lang.reflect.Array;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 
 
-public class fileConversions {
+public class FileConversions {
     // move all the img - b64 stuff into here 
     // and the b64 - img 
     // Only allowing PNG, JPG & JPEG atm                *** NO VIDEO STUFF ***
@@ -22,7 +22,7 @@ public class fileConversions {
     private static final HashSet<String> ALLOWED_FILE_EXTENSIONS = new HashSet<>(
         Arrays.asList("pdf","txt")
     );
-
+    
     public static String getExtension(String filePath){
         String fileName = Paths.get(filePath).getFileName().toString();
         int dotIndex = fileName.lastIndexOf(".");     // <--- reads only after the . in file

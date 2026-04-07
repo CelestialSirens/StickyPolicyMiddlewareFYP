@@ -9,8 +9,8 @@
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>release</maven.compiler.source>
+        <maven.compiler.target>release</maven.compiler.target>
     </properties>
 
     <repositories>
@@ -53,6 +53,12 @@
                 <source>11</source> <target>11</target>
             </configuration>
         </plugin>
+        <plugin>
+    <groupId>com.github.spotbugs</groupId>
+    <artifactId>spotbugs-maven-plugin</artifactId>
+    <version>4.8.3.0</version>
+</plugin>
+<!-- mvn spotbugs:check FOR SAST command in the CMD line-->
     </plugins>
 </build>
 </project>

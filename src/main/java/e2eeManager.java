@@ -4,11 +4,11 @@ import javax.crypto.spec.*;
 import java.security.*;
 import java.security.spec.*;
 
-public class e2eeManager {
+public class E2eeManager {
     private KeyPair keyPair;
     private SecretKey sharedSecret;
 
-    public e2eeManager() throws Exception {
+    public E2eeManager() throws Exception {
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
         kpg.initialize(new ECGenParameterSpec("secp256r1")); // remember Signal uses this curve <-- mention it in report
         this.keyPair = kpg.generateKeyPair();
@@ -29,8 +29,8 @@ public class e2eeManager {
     }
      
     // encrypt function 
-        
 
+    
 
 
 

@@ -1,14 +1,10 @@
 
 import java.io.*;
-import java.nio.*;
 import java.net.*;
 import java.time.Instant;
 import java.util.*;
 
 import org.json.JSONObject;
-import org.json.JSONObject.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
  
 
 public class Phoebe {   
@@ -24,11 +20,11 @@ public class Phoebe {
         username = scanner.nextLine();
         System.out.print("Enter the port you want to listen on (e.g. 6000): ");
         int myPort = Integer.parseInt(scanner.nextLine());
-      
+        
         // Server Thread start
         new Thread(new ServerTask(myPort)).start();
         System.out.println("You are listening on port " + myPort);
-        System.out.println("Connect to other user, type: /connect [IP] [PORT]");
+        System.out.println("Connect to other user, type: /connect [IP] [PORT]");  // get rid after Peer discov
         System.out.println("To specify a user you wish to dm (JSON), type:/message [Username]");
         System.out.println("When you wish to send an image, use /send_image");
         System.out.println("To send a message, just type it.");
@@ -40,15 +36,14 @@ public class Phoebe {
 
             if (input.trim().isEmpty()) continue;
 
-            String[] cmdCheck = input.split(" ",2);
-            String command = cmdCheck[0];    
+            String command = input;    
             switch (command) {
-                case "/connect":
+                case "/connect":    // <-- This needs changing once the DHT / Peer discovery has been fully changed
                     String[] con_parts = input.split(" ");
                     if (con_parts.length == 3) {
                     String ip = con_parts[1];
                     int port = Integer.parseInt(con_parts[2]);
-                    connectToPeer(ip, port);
+                    connectToPeer(ip, port);    
                 } else {
                     System.out.println("Must contain: [IP] [PORT] ");
                 }
@@ -56,7 +51,7 @@ public class Phoebe {
                 case "/message":
                         System.out.print("Send to:");
                         String recieverUUID = scanner.nextLine().trim();
-                        System.out.print("Message to end:");
+                        System.out.print("Message to send:");
                         String content = scanner.nextLine().trim();
                         System.out.println("Set Policy requirements (spam enter if none needed)");
                         System.out.println("Allow user to read? (yes or no):");  // if no just ends the process
@@ -72,7 +67,7 @@ public class Phoebe {
                             .expiryFromInput(expiryInput)
                             .build();
 
-                        sendTo(recieverUUID, JsonBuilder(username, recieverUUID, content, "text", "", policy));
+                        sendTo(recieverUUID, jsonBuilder(username, recieverUUID, content, "text", "", policy));
                     break;
 
                     case "/image": 
@@ -91,9 +86,9 @@ public class Phoebe {
                             .expiryFromInput(imgExpiry)
                             .build();
                         try {
-                            String ext = fileConversions.getExtension(imgPath);
-                            String b64 = fileConversions.imageToB64(imgPath);
-                            String imgJson = JsonBuilder(username, imgReciever, b64, "image", ext, imgPolicy);
+                            String ext = FileConversions.getExtension(imgPath);
+                            String b64 = FileConversions.imageToB64(imgPath);
+                            String imgJson = jsonBuilder(username, imgReciever, b64, "image", ext, imgPolicy);
                             sendTo(imgReciever, imgJson);
                         } catch (Exception e) {
                             System.out.println("[Phoebe]: "+ e.getMessage());
@@ -116,9 +111,9 @@ public class Phoebe {
                             .expiryFromInput(fileExpiry)
                             .build();
                         try {
-                            String ext = fileConversions.getExtension(fileFilePath);
-                            String b64 = fileConversions.fileToB64(fileFilePath); 
-                            String fileJson = JsonBuilder(username, fileReciever, b64, "file", ext, filePolicy);
+                            String ext = FileConversions.getExtension(fileFilePath);
+                            String b64 = FileConversions.fileToB64(fileFilePath); 
+                            String fileJson = jsonBuilder(username, fileReciever, b64, "file", ext, filePolicy);
                             sendTo(fileReciever, fileJson);
                         } catch (Exception e) {
                             System.out.println("[Phoebe]: "+ e.getMessage());
@@ -159,7 +154,7 @@ public class Phoebe {
 
     // -- Json Code below -- 
 // Edit this all its ass . For those not me reading, crow = message Oculus = logs of message
-   public static String JsonBuilder(String senderUsername, String reciverUsername, String message, String typeOfData, String fileName, StickyPolicy policy){
+   public static String jsonBuilder(String senderUsername, String reciverUsername, String message, String typeOfData, String fileName, StickyPolicy policy){
         
     JSONObject crow = new JSONObject()
     .put("proginator", senderUsername)
@@ -268,7 +263,7 @@ public class Phoebe {
                         }
                     }
                 }
-                System.out.println("[Phoebe]:" + senderUsername + "" + "has connected.");
+                System.out.println("[Phoebe]:" + senderUsername + " " + "has connected.");
                 String message;
                 while ((message = in.readLine()) != null) {
                     try{
@@ -294,7 +289,7 @@ public class Phoebe {
                             PolicyEnforcer imgEnforcer = new PolicyEnforcer(imgPolicy);
                             if (!imgEnforcer.canRead()) break; 
                             System.out.println("["+ sender +"]: " + "send an image");
-                            fileConversions.B64ToImage(
+                            FileConversions.B64ToImage(
                                 sender,
                                 crow.getString("message"),
                                 crow.getString("fileName")
@@ -305,19 +300,19 @@ public class Phoebe {
                             PolicyEnforcer fileEnforcer = new PolicyEnforcer(filePolicy);
                             if (!fileEnforcer.canRead()) break; 
                             System.out.println("["+ sender +"]: " + "send a file");
-                            fileConversions.B64ToFile(
+                            FileConversions.B64ToFile(
                                 sender,
                                 crow.getString("message"),
                                 crow.getString("fileName")
                             );
                             break;
-
                         default:
                             System.out.println("[" + sender + "] sent an unknown message type: " + typeOfData);
                             break;
                     }
-                  } catch (Exception e) {
-                    // Not JSON or malformed, print raw as fallback
+                  } catch (RuntimeException e) {
+                    throw e;
+                  } catch (Exception e) {// Not JSON or malformed, print raw as fallback
                     System.out.println(message);
                 }
             }

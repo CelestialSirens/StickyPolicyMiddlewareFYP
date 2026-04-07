@@ -26,11 +26,12 @@ public class StickyPolicy {
                 long ntpTime = info.getMessage().getTransmitTimeStamp().getTime() / 1000;
                 client.close();
                 return ntpTime > expiryEpoch;
-            } catch (Exception e) {
-
+            } catch (RuntimeException e) {
+                throw e;
+            }catch (Exception e){
                 System.out.println("[Phoebe]: Could not reach expiry time server, will not send file. Try again later ensure BOTH users are connected to the internet.");
                 return true;
-            }
+                }
         }
         
         public JSONObject toJSON() {
