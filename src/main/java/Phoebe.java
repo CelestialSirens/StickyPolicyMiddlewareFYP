@@ -242,7 +242,7 @@ public class Phoebe {
     }
     // BACKGROUND TASK: Listening for clients
     private static class ServerTask implements Runnable {
-        private int port;
+        private final int port;
 
         public ServerTask(int port) {
             this.port = port;
