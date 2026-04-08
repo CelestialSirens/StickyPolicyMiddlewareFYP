@@ -209,11 +209,11 @@ public class Phoebe {
             String peerDHTJson = input.readLine();
             if(peerDHTJson != null){
                 try {
-                    DHT peerDHT = DHT.fromJson(JSONObject(peerDHTJson));
+                    DHT peerDHT = DHT.fromJson(new JSONObject(peerDHTJson));
                     dht.merge(peerDHT);
-                System.out.println("[Testing]: Tables merged - Line 190");
+                System.out.println("[Testing]: Tables merged - Line 214");
             } catch (Exception e){
-                System.out.println("[Testing]: Tables failed to merge - 192");
+                System.out.println("[Testing]: Tables failed to merge - 216");
             }
         }
             
