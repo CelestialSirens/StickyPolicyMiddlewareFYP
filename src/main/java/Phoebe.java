@@ -38,16 +38,32 @@ public class Phoebe {
 
             String command = input;    
             switch (command) {
-                case "/connect":    // <-- This needs changing once the DHT / Peer discovery has been fully changed
-                    String[] con_parts = input.split(" ");
-                    if (con_parts.length == 3) {
-                    String ip = con_parts[1];
-                    int port = Integer.parseInt(con_parts[2]);
-                    connectToPeer(ip, port);    
-                } else {
-                    System.out.println("Must contain: [IP] [PORT] ");
-                }
+                case "/connect":   
+                    System.out.println("Username to connect to:");
+                    String connectUsername = scanner.nextLine().trim();
+                    try{ 
+                        DHT.PeerInfo peerInfo = dht.lookup(connectUsername);
+                        connectToPeer(peerInfo.ip, peerInfo.port);
+                        System.out.println("[Phoebe]: Connected to " + connectUsername);
+                    } catch (Exception e){
+                        System.out.println("[Phoebe]: " + e.getMessage());
+                    } 
+
                     break;
+                case "/initalise":
+                        System.out.println("IP:");
+                        String initalisedIP = scanner.nextLine().trim();
+                        System.out.println("Port:");
+                        int initalisedPort = Integer.parseInt(scanner.nextLine().trim());
+                        connectToPeer(initalisedIP, initalisedPort);
+                        try{
+                            dht.register(username, initalisedIP, initalisedPort);
+                            System.out.println("[Phoebe]: Initalised into network.");
+                            System.out.println("[Phoebe]: Please remember to do this regularly for an up to date network.");
+                        } catch (Exception e){
+                            System.out.println("[Phoebe]: " + e.getMessage());
+                        }
+                        break;
                 case "/message":
                         System.out.print("Send to:");
                         String recieverUUID = scanner.nextLine().trim();
@@ -121,6 +137,7 @@ public class Phoebe {
                         break;  
                     case "/help":
                         System.out.println("Write listed commands and their features here.");
+                        System.out.println("/initalise - need to do this with a known user to initiate your tables");
                         System.out.println("/connect [username] - connect to a known user");
                         System.out.println("/message - send a message to a known user");
                         System.out.println("/image - send an image to a known user");
