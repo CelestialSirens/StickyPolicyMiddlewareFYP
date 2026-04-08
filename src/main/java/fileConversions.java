@@ -10,15 +10,12 @@ import java.util.Arrays;
 
 
 public class FileConversions {
-    // move all the img - b64 stuff into here 
-    // and the b64 - img 
-    // Only allowing PNG, JPG & JPEG atm                *** NO VIDEO STUFF ***
 
-    // << -- File checking -- >>  
+    // Only allowing PNG, JPG & JPEG       
     private static final HashSet<String> ALLOWED_IMAGE_EXTENSIONS = new HashSet<>(
         Arrays.asList("png","jpg","jpeg")
     );
-    // Only allowing PDF, TXT atm.   23/02/26
+    // Only allowing PDF, TXT 
     private static final HashSet<String> ALLOWED_FILE_EXTENSIONS = new HashSet<>(
         Arrays.asList("pdf","txt")
     );

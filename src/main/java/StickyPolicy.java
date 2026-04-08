@@ -1,7 +1,5 @@
-import org.apache.commons.net.ntp.NTPUDPClient;
-import org.apache.commons.net.ntp.TimeInfo;
+
 import org.json.JSONObject;
-import java.net.InetAddress;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -19,21 +17,13 @@ public class StickyPolicy {
         public boolean isExpired() {
             if (expiryEpoch == 0) return false;
             try {
-                NTPUDPClient client = new NTPUDPClient();
-                client.setDefaultTimeout(5000);
-                InetAddress hostAddr = InetAddress.getByName("pool.ntp.org");
-                TimeInfo info = client.getTime(hostAddr);
-                long ntpTime = info.getMessage().getTransmitTimeStamp().getTime() / 1000;
-                client.close();
-                return ntpTime > expiryEpoch;
-            } catch (RuntimeException e) {
-                throw e;
-            }catch (Exception e){
-                System.out.println("[Phoebe]: Could not reach expiry time server, will not send file. Try again later ensure BOTH users are connected to the internet.");
-                return true;
-                }
+                long now = TimeCheck.UTCTime();
+                return now > expiryEpoch;
+            } catch(Exception e){
+                 System.out.println("[Phoebe]: Could not reach expiry time server, will not send file. Try again later ensure BOTH users are connected to the internet.");
+                 return true;
+            }
         }
-        
         public JSONObject toJSON() {
             return new JSONObject()
                     .put("allowRead", allowRead)

@@ -18,32 +18,44 @@ public class E2eeManager {
     }
     
     public void deriveSharedSecret(byte[] peerPubKeyBytes) throws Exception {
-        KeyFactory kf = KeyFactory.getInstance("EC");
-        PublicKey peerKey = kf.generatePublic(new X509EncodedKeySpec(peerPubKeyBytes));
-        KeyAgreement ka = KeyAgreement.getInstance("ECDH");
-        ka.init(keyPair.getPrivate());
-        ka.doPhase(peerKey, true);
-        byte[] raw = ka.generateSecret();
-        byte[] keyBytes = MessageDigest.getInstance("SHA-256").digest(raw);
-        this.sharedSecret = new SecretKeySpec(keyBytes, "AES");
+        KeyFactory kF = KeyFactory.getInstance("EC");
+        PublicKey peerPubKey = kF.generatePublic(new X509EncodedKeySpec(peerPubKeyBytes));
+
+        KeyAgreement kA = KeyAgreement.getInstance("ECHD");
+        kA.init(keyPair.getPrivate());
+        kA.doPhase(peerPubKey, true);
+
+        byte[] rawSecret = kA.generateSecret();
+        this.sharedSecret = deriveAESKEY(rawSecret);
     }
+             private SecretKey deriveAESKEY(byte[] rawSecret) throws Exception{
+                    MessageDigest hkfd = MessageDigest.getInstance("HKFD");
+                    byte [] keyBytes = hkfd.digest(rawSecret);
+                    return new SecretKeySpec(keyBytes,"AES");
+            }
+
      
-    // encrypt function 
+    // encrypt function https://medium.com/@pravallikayakkala123/understanding-aes-encryption-and-aes-gcm-mode-an-in-depth-exploration-using-java-e03be85a3faa
 
-    
+    public byte[] encrypt(String plaintext) throws Exception{
+        byte[] iv = new byte[12]; 
+        new SecureRandom().nextBytes(iv);
+        Cipher cipher = Cipher.getInstance("AES/GCM");
+        cipher.init(Cipher.ENCRYPT_MODE, sharedSecret, new GCMParameterSpec(128,iv));
 
+        byte[] ciphertext = cipher.doFinal(plaintext.getBytes("UTF-8"));
+        byte[] attachedMsg = new byte[iv.length + ciphertext.length];
 
-
-
-
-
-
-
-
-
+        System.arraycopy(iv, 0, attachedMsg, 0, iv.length);
+        System.arraycopy(ciphertext, 0, attachedMsg, iv.length, ciphertext.length);
+        return attachedMsg;
+    }
 
     // decrypt function
 
+    public String decrypt(byte[] encryptedData) throws Exception{
+        byte[] iv = new byte[12];
+    }
 
 
 }

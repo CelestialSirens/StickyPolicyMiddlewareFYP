@@ -26,11 +26,6 @@
             <artifactId>tomp2p-all</artifactId>
             <version>5.0-Beta8</version>
         </dependency>
-        <dependency>
-             <groupId>commons-net</groupId>
-             <artifactId>commons-net</artifactId>
-             <version>3.9.0</version>
-        </dependency>
     <dependency>
     <groupId>org.json</groupId>
     <artifactId>json</artifactId>
