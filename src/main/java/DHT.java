@@ -32,13 +32,40 @@ public class DHT {
         return table.get(username);
     }
 
+    public void remove (String username){
+        table.remove(username);
+        System.out.println("[Phoebe]: Removed " + username);
+    }
 
+    public void merge (DHT other){
+        for (Map.Entry<String, PeerInfo> en : other.table.entrySet()) {
+            String username = en.getKey();
+            PeerInfo incoming = en.getValue();
+            if (table.containsKey(username)){
+                if (incoming.timestamp > table.get(username).timestamp) {
+                    table.put(username, incoming);
+                } else {
+                    table.put(username, incoming);
+                }
+            }
+        }
+    }
 
-
-
-
-
-
+    public JSONObject toJson(){
+        JSONObject json = new JSONObject();
+        for (Map.Entry<String, PeerInfo> en : table.entrySet()) {
+            json.put(en.getKey(), en.getValue().toJson());
+        }
+        return json;
+    }    
+    public static DHT fromJson(JSONObject json) throws Exception{
+        DHT dht = new DHT();
+        for(String username : json.keySet()){
+            JSONObject peerJson = json.getJSONObject(username);
+            dht.table.put(username, PeerInfo.fromJSON(peerJson));
+        }
+        return dht;
+    }
 
     public static class PeerInfo{
         public final String ip;
@@ -49,6 +76,19 @@ public class DHT {
             this.ip = ip;
             this.port = port;
             this.timestamp = timestamp;
+        }
+        private JSONObject toJson() {
+           return new JSONObject()
+           .put("ip", ip)
+           .put("port", port)
+           .put("timestamp", timestamp);
+        }
+        private static PeerInfo fromJSON(JSONObject json) {
+            return new PeerInfo(
+                json.getString("ip"),
+                json.getInt("port"),
+                json.getLong("timestamp")
+            );
         }
     }
 }
