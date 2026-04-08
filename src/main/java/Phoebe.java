@@ -8,9 +8,9 @@ import org.json.JSONObject;
  
 
 public class Phoebe {   
-//private static final String UUID = UUID.randomUUID().toString(); // this is temp before DHT
-//private static final String UUID = 
-    // List to keep track of all the people we are talking to : Change to DHT 
+
+    private static final DHT dht = new DHT();
+
     private static final List<Peer> peers = Collections.synchronizedList(new ArrayList<>());
     private static String username;
     public static void main(String[] args) throws IOException {
@@ -121,6 +121,12 @@ public class Phoebe {
                         break;  
                     case "/help":
                         System.out.println("Write listed commands and their features here.");
+                        System.out.println("/connect [username] - connect to a known user");
+                        System.out.println("/message - send a message to a known user");
+                        System.out.println("/image - send an image to a known user");
+                        System.out.println("/file - send a file to a known user");
+                        System.out.println("/exit - close Phoebe");
+                        System.err.println("For more detailed information, do any command (except /exit) without all prematers");                       
                         break;
                     case "/exit":
                         System.out.println("Closing Phoebe");
@@ -128,7 +134,7 @@ public class Phoebe {
                         break; 
                default:
                    if (input.startsWith("/")){
-                       System.out.println("Command not recognised, type /help for listed commands.");
+                       System.out.println("Command not recognised, type /help for listed commands. Please check all tables updated with /initalise");
                    } else{
                        broadcast("["+ username + "]:" + input);
                     }
@@ -179,14 +185,27 @@ public class Phoebe {
         try {
             Socket socket = new Socket(ip, port);
             PrintWriter out = new PrintWriter(socket.getOutputStream(),true);
+            BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out.println(username);
+            out.println(dht.toJson().toString());
+
+            String peerDHTJson = input.readLine();
+            if(peerDHTJson != null){
+                try {
+                    DHT peerDHT = DHT.fromJson(JSONObject(peerDHTJson));
+                    dht.merge(peerDHT);
+                System.out.println("[Testing]: Tables merged - Line 190");
+            } catch (Exception e){
+                System.out.println("[Testing]: Tables failed to merge - 192");
+            }
+        }
+            
             setupStreams(socket, out);
             System.out.println("Connected to peer at " + ip + ":" + port);
         } catch (IOException e) {
             System.out.println("Failed to connect to " + ip + ":" + port);
         }
     }
-
     // New code processes username from connect->peer (for below)
     private static void setupStreams(Socket socket, PrintWriter out) throws IOException {
         peers.add(new Peer("defaultName", 
@@ -204,10 +223,7 @@ public class Phoebe {
             }
         }
     }
-
-
     // BACKGROUND TASK: Listening for clients
-
     private static class ServerTask implements Runnable {
         private int port;
 
@@ -230,7 +246,6 @@ public class Phoebe {
             }
         }
     }
-
     // BACKGROUND TASK: Listening to dm client  -- need to make test on this ::::::::::::
 
     // this needs HEAVY editing, its the biggest connection
@@ -244,12 +259,28 @@ public class Phoebe {
             this.out = out;
             this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         }
-
         @Override
         public void run() {
             try {
                 String senderUsername = in.readLine();
                 if (senderUsername == null) return;
+
+                String peerDHTJson = in.readLine();
+                if (peerDHTJson != null){
+                    try {
+                        DHT peerDHT = DHT.fromJson(new JSONObject(peerDHTJson));
+                        dht.merge(peerDHT);
+                        System.out.println("[Peer handler]: Tables merged with " + senderUsername);
+                    } catch (Exception e) {
+                        System.out.println("[Peer handler]: Tables failed to merge with " + senderUsername);
+                    }
+                }
+                out.println(dht.toJson().toString());
+                try {
+                    dht.register(senderUsername, socket.getInetAddress().getHostAddress(), socket.getPort());
+                } catch (Exception e) {
+                    System.out.println("[Peer handler]:"+ e.getMessage());
+                }
                 synchronized(peers){
                     for( Peer peer : peers){
                         if (peer.out == out) {
@@ -321,6 +352,14 @@ public class Phoebe {
             } finally {
                 System.out.println("[Phoebe]: A peer disconnected." );
                 peers.removeIf(peer -> peer.out == out); // Maybe mention in report? Makes more accurate, https://www.w3schools.com/java/ref_arraylist_removeif.asp
+                synchronized (peers) {
+                    for (Peer peer : peers){
+                        if (peer.out == out){
+                            dht.remove(peer.username);
+                            break;
+                        }
+                    }
+                }
                 try { socket.close(); } catch (IOException e) {}
             }
         }
