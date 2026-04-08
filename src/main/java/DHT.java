@@ -27,7 +27,7 @@ public class DHT {
     }
     public PeerInfo lookup(String username) throws Exception{
         if (!table.containsKey(username)){
-            throw new Exception("[Phoebe]: No username found" + username);
+            throw new Exception("[Phoebe]: No username found " + username);
         }
         return table.get(username);
     }
@@ -41,12 +41,9 @@ public class DHT {
         for (Map.Entry<String, PeerInfo> en : other.table.entrySet()) {
             String username = en.getKey();
             PeerInfo incoming = en.getValue();
-            if (table.containsKey(username)){
-                if (incoming.timestamp > table.get(username).timestamp) {
-                    table.put(username, incoming);
-                } else {
-                    table.put(username, incoming);
-                }
+            PeerInfo current = table.get(username);
+            if (current == null || incoming.timestamp > current.timestamp) {
+                table.put(username, incoming);
             }
         }
     }

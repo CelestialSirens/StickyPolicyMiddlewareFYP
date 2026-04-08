@@ -20,6 +20,13 @@ public class Phoebe {
         username = scanner.nextLine();
         System.out.print("Enter the port you want to listen on (e.g. 6000): ");
         int myPort = Integer.parseInt(scanner.nextLine());
+        try {
+            String localIp = InetAddress.getLocalHost().getHostAddress();
+            dht.register(username, localIp, myPort);
+            System.out.println("[Testing]: Registed as " + username + "at " + localIp + ": " + myPort);
+        } catch (Exception e) {
+            System.out.println("[Testing]: " + e.getMessage());
+        }
         
         // Server Thread start
         new Thread(new ServerTask(myPort)).start();
@@ -46,7 +53,7 @@ public class Phoebe {
                         connectToPeer(peerInfo.ip, peerInfo.port);
                         System.out.println("[Phoebe]: Connected to " + connectUsername);
                     } catch (Exception e){
-                        System.out.println("[Phoebe]: " + e.getMessage());
+                        System.out.println(e.getMessage() + " ");
                     } 
 
                     break;
@@ -170,7 +177,7 @@ public class Phoebe {
                 }
             }
         }
-        System.out.println("[Phoebe]: User"+ targetName + "Not found");
+        System.out.println("[Phoebe]: User "+ targetName + " Not found");
         return false;
     }
 
@@ -217,19 +224,19 @@ public class Phoebe {
             }
         }
             
-            setupStreams(socket, out);
+            setupStreams(socket, out, input);
             System.out.println("Connected to peer at " + ip + ":" + port);
         } catch (IOException e) {
             System.out.println("Failed to connect to " + ip + ":" + port);
         }
     }
     // New code processes username from connect->peer (for below)
-    private static void setupStreams(Socket socket, PrintWriter out) throws IOException {
+    private static void setupStreams(Socket socket, PrintWriter out, BufferedReader in) throws IOException {
         peers.add(new Peer("defaultName", 
         socket.getInetAddress().getHostAddress(), 
         socket.getPort(), 
         out));
-        new Thread(new PeerHandler(socket, out)).start();
+        new Thread(new PeerHandler(socket, out, in)).start();
     }
 
     // Helper to send a message to everyone in the peers list
@@ -255,7 +262,8 @@ public class Phoebe {
                     Socket socket = serverSocket.accept();
                     // When someone connects, set up the streams
                     PrintWriter out = new PrintWriter(socket.getOutputStream(),true);
-                    setupStreams(socket,out);
+                    BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                    setupStreams(socket,out, in);
                     System.out.println("A new peer has connected to you!");
                 }
             } catch (IOException e) {
@@ -271,10 +279,10 @@ public class Phoebe {
         private BufferedReader in;
         private PrintWriter out;
 
-        public PeerHandler(Socket socket, PrintWriter out) throws IOException {
+        public PeerHandler(Socket socket, PrintWriter out, BufferedReader in) throws IOException {
             this.socket = socket;
             this.out = out;
-            this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            this.in = in;
         }
         @Override
         public void run() {
@@ -358,8 +366,6 @@ public class Phoebe {
                             System.out.println("[" + sender + "] sent an unknown message type: " + typeOfData);
                             break;
                     }
-                  } catch (RuntimeException e) {
-                    throw e;
                   } catch (Exception e) {// Not JSON or malformed, print raw as fallback
                     System.out.println(message);
                 }
