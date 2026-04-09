@@ -64,6 +64,9 @@ public class DHT {
         return dht;
     }
 
+    public HashMap<String, PeerInfo> getTable(){
+        return table;
+    }
     public static class PeerInfo{
         public final String ip;
         public final int port;

@@ -13,6 +13,7 @@ public class Phoebe {
 
     private static final List<Peer> peers = Collections.synchronizedList(new ArrayList<>());
     private static String username;
+    private static int myPort;
     public static void main(String[] args) throws IOException {
         Scanner scanner = new Scanner(System.in);
         System.out.println("--- Welcome to Phoebe ---");
@@ -48,6 +49,20 @@ public class Phoebe {
                 case "/connect":   
                     System.out.println("Username to connect to:");
                     String connectUsername = scanner.nextLine().trim();
+
+                    boolean alreadyConnected = false;
+                    synchronized (peers) {
+                        for (Peer peer : peers){
+                            if (peer.username.equals(connectUsername)){
+                                alreadyConnected = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (alreadyConnected) {
+                        System.out.println("[Phoebe]: Already connected to " + connectUsername);
+                        break;
+                    }
                     try{ 
                         DHT.PeerInfo peerInfo = dht.lookup(connectUsername);
                         connectToPeer(peerInfo.ip, peerInfo.port);
@@ -55,7 +70,6 @@ public class Phoebe {
                     } catch (Exception e){
                         System.out.println(e.getMessage() + " ");
                     } 
-
                     break;
                 case "/initalise":
                         System.out.println("IP:");
@@ -64,7 +78,6 @@ public class Phoebe {
                         int initalisedPort = Integer.parseInt(scanner.nextLine().trim());
                         connectToPeer(initalisedIP, initalisedPort);
                         try{
-                            dht.register(username, initalisedIP, initalisedPort);
                             System.out.println("[Phoebe]: Initalised into network.");
                             System.out.println("[Phoebe]: Please remember to do this regularly for an up to date network.");
                         } catch (Exception e){
@@ -170,7 +183,9 @@ public class Phoebe {
 // Checks target is real and ACTUALLY dm's only to them
     private static boolean sendTo(String targetName, String message){
         synchronized(peers){
+            System.out.println("[Testing]: Looking for " + targetName + "in list");
             for (Peer peer:peers){
+                System.out.println("[Testing]: Found peer:" + peer.username + "");
                 if (peer.username.equals(targetName)){
                     peer.out.println(message);
                     return true;
@@ -206,11 +221,21 @@ public class Phoebe {
 
     // Client thread connect-other
     private static void connectToPeer(String ip, int port) {
+        synchronized (peers) {
+            for (Peer peer :peers){
+                if (peer.ip.equals(ip)){
+                    System.out.println("[Phoebe]: Already connected to this peer");
+                    return;
+                }
+            }
+        }
         try {
             Socket socket = new Socket(ip, port);
             PrintWriter out = new PrintWriter(socket.getOutputStream(),true);
             BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            out.println("INIT");
             out.println(username);
+            out.println("PORT:" +myPort);
             out.println(dht.toJson().toString());
 
             String peerDHTJson = input.readLine();
@@ -223,20 +248,35 @@ public class Phoebe {
                 System.out.println("[Testing]: Tables failed to merge - 216");
             }
         }
-            
-            setupStreams(socket, out, input);
+            String ready = input.readLine();
+            if (!"READY".equals(ready)){
+                System.out.println("[Phoebe]: Handshake failed");
+                socket.close();
+                return;
+            }
+            String peerUsername = "defaultName";
+            synchronized (dht) {
+                for (Map.Entry<String, DHT.PeerInfo> en : dht.getTable().entrySet()) {
+                    if (en.getValue().ip.equals(ip)){
+                        peerUsername = en.getKey();
+                        break;
+                    }
+                    
+                }
+            }
+            setupStreams(socket, out, input, true, peerUsername);
             System.out.println("Connected to peer at " + ip + ":" + port);
         } catch (IOException e) {
             System.out.println("Failed to connect to " + ip + ":" + port);
         }
     }
     // New code processes username from connect->peer (for below)
-    private static void setupStreams(Socket socket, PrintWriter out, BufferedReader in) throws IOException {
-        peers.add(new Peer("defaultName", 
+    private static void setupStreams(Socket socket, PrintWriter out, BufferedReader in, boolean handShakeDone, String knownUsername) throws IOException {
+        peers.add(new Peer(knownUsername != null ? knownUsername :"defaultName", 
         socket.getInetAddress().getHostAddress(), 
         socket.getPort(), 
         out));
-        new Thread(new PeerHandler(socket, out, in)).start();
+        new Thread(new PeerHandler(socket, out, in, handShakeDone)).start();
     }
 
     // Helper to send a message to everyone in the peers list
@@ -263,7 +303,7 @@ public class Phoebe {
                     // When someone connects, set up the streams
                     PrintWriter out = new PrintWriter(socket.getOutputStream(),true);
                     BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                    setupStreams(socket,out, in);
+                    setupStreams(socket,out, in, false, null);
                     System.out.println("A new peer has connected to you!");
                 }
             } catch (IOException e) {
@@ -278,18 +318,29 @@ public class Phoebe {
         private Socket socket; 
         private BufferedReader in;
         private PrintWriter out;
+        private final boolean handShakeDone;
 
-        public PeerHandler(Socket socket, PrintWriter out, BufferedReader in) throws IOException {
+        public PeerHandler(Socket socket, PrintWriter out, BufferedReader in, boolean handShakeDone) throws IOException {
             this.socket = socket;
             this.out = out;
             this.in = in;
+            this.handShakeDone = handShakeDone;
         }
         @Override
         public void run() {
             try {
+                if (!handShakeDone){
+                String firstline = in.readLine();
+                if (firstline == null) return;
+                if (!firstline.equals("INIT")){
+                    System.out.println("[Phoebe]: Invalid handshake");
+                    return;
+                }
+
                 String senderUsername = in.readLine();
                 if (senderUsername == null) return;
-
+                String portline = in.readLine();
+                int d1ListenPort = Integer.parseInt(portline.replace("PORT:", ""));
                 String peerDHTJson = in.readLine();
                 if (peerDHTJson != null){
                     try {
@@ -301,8 +352,9 @@ public class Phoebe {
                     }
                 }
                 out.println(dht.toJson().toString());
+                out.println("READY");
                 try {
-                    dht.register(senderUsername, socket.getInetAddress().getHostAddress(), socket.getPort());
+                    dht.register(senderUsername, socket.getInetAddress().getHostAddress(), d1ListenPort);
                 } catch (Exception e) {
                     System.out.println("[Peer handler]:"+ e.getMessage());
                 }
@@ -313,13 +365,14 @@ public class Phoebe {
                             peers.add(new Peer( 
                                 senderUsername, 
                                 socket.getInetAddress().getHostAddress(),
-                                socket.getPort(),
+                                d1ListenPort,
                                 out));
                                 break;
                         }
                     }
                 }
                 System.out.println("[Phoebe]:" + senderUsername + " " + "has connected.");
+            }
                 String message;
                 while ((message = in.readLine()) != null) {
                     try{
