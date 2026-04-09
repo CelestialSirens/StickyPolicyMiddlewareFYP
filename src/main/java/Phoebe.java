@@ -359,7 +359,7 @@ public class Phoebe {
                     System.out.println("[Peer handler]:"+ e.getMessage());
                 }
                 synchronized(peers){
-                    for( Peer peer : peers){
+                    for(Peer peer : peers){
                         if (peer.out == out) {
                             peers.remove(peer);
                             peers.add(new Peer( 
@@ -372,6 +372,28 @@ public class Phoebe {
                     }
                 }
                 System.out.println("[Phoebe]:" + senderUsername + " " + "has connected.");
+                } else 
+                try{
+                    String nonDefaultName = "defaultName";
+                    for (Map.Entry<String, DHT.PeerInfo> en : dht.getTable().entrySet()) {
+                        if (en.getValue().ip.equals(socket.getInetAddress().getHostAddress())){
+                        nonDefaultName = en.getKey();
+                        break;
+                    }
+                }
+                final String realUsername = nonDefaultName;
+                synchronized (peers) {
+                    for (Peer peer : peers){
+                        if (peer.out == out){
+                            peers.remove(peer);
+                            peers.add(new Peer( realUsername, socket.getInetAddress().getHostAddress(), myPort, out));
+                            break;
+                        }
+                    }
+                }
+                System.out.println("[Phoebe]: " + realUsername + " has connected");
+            } catch (Exception e){
+                System.out.println("[Phoebe]: Could not resolve username");
             }
                 String message;
                 while ((message = in.readLine()) != null) {
