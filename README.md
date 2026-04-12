@@ -67,12 +67,9 @@ Meta data found attatched to the data sent is then processed once a user recieve
 
 
 ## Personal notes 
-  
-23.02.25
+EVERYTHING IS ON FIRE AND IM BEHIND A LOT  
 
-Current plans for addition, a basic GUI for viewing any data sent between users similar to a simple QBT style application using JavaFX.
-
-Have started to change I.O elements -> Nio for better file handling stuff. 
+Current plans for addition, The GUI is just the jar file that makes the window open, Not sure how / why it isnt happening anymore....
 
 Added a new switch case for the actual receiving of data from other users, allows for more specific instructions on whats read etc than before.
 
@@ -86,7 +83,11 @@ If two or more Peers have the same username how do you define who the peer is? H
 
 How to make sure a user can not corupt the privacy elements of the code by pretending to be another user i.e. IP spoof etc.
 
-How to make the file an EXE - better than making it just a cmd always compile project and more user friendly for testing etc.
-
-
 --> Need a discovery mechanism for the DHT
+------^ 
+So like no?? Technically DHT code is in it now. Does it work, no. Is it able to work eventually, probably.
+                          People connect and tables merge thats FINE but it breaks because I cant code and dont KNOW HOW THE . Its just broken.
+
+
+Need to add more comments that i can use in demo 
+
