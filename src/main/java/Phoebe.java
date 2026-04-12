@@ -24,7 +24,7 @@ public class Phoebe {
         try {
             String localIp = InetAddress.getLocalHost().getHostAddress();
             dht.register(username, localIp, myPort);
-            System.out.println("[Testing]: Registed as " + username + "at " + localIp + ": " + myPort);
+            System.out.println("[Testing]: Registed as " + username + " at " + localIp + "  : " + myPort);
         } catch (Exception e) {
             System.out.println("[Testing]: " + e.getMessage());
         }
@@ -32,7 +32,8 @@ public class Phoebe {
         // Server Thread start
         new Thread(new ServerTask(myPort)).start();
         System.out.println("You are listening on port " + myPort);
-        System.out.println("Connect to other user, type: /connect [IP] [PORT]");  // get rid after Peer discov
+        System.out.println("Please ensure you have merged your tables with another user before attempting to message them.");
+        System.out.println("To connect to other users, type: /connect [username] ");  
         System.out.println("To specify a user you wish to dm (JSON), type:/message [Username]");
         System.out.println("When you wish to send an image, use /send_image");
         System.out.println("To send a message, just type it.");
@@ -72,30 +73,48 @@ public class Phoebe {
                     } 
                     break;
                 case "/initalise":
-                        System.out.println("IP:");
+                        System.out.println("[Table merging] IP:");
                         String initalisedIP = scanner.nextLine().trim();
-                        System.out.println("Port:");
+                        System.out.println("[Table merging] Port:");
                         int initalisedPort = Integer.parseInt(scanner.nextLine().trim());
                         connectToPeer(initalisedIP, initalisedPort);
                         try{
                             System.out.println("[Phoebe]: Initalised into network.");
-                            System.out.println("[Phoebe]: Please remember to do this regularly for an up to date network.");
+                            System.out.println("[Phoebe]: Please remember to do /update regularly for an up to date network.");
+                            System.out.println("[Phoebe]: ");
                         } catch (Exception e){
                             System.out.println("[Phoebe]: " + e.getMessage());
                         }
                         break;
+                case "/update":
+                    System.out.println("[Phoebe-Update]: Requesting DHT update from all connected peers...");
+                    synchronized (peers) {
+                        for (Peer peer : peers){
+                            JSONObject updateRequest = new JSONObject()
+                        .put("oculus", new JSONObject()
+                            .put("type", "update_request")
+                            .put("timestampe", Instant.now().getEpochSecond()))
+                        .put("crow", new JSONObject()
+                            .put("proginator", username)
+                            .put( "reciever", peer.username));
+
+                            peer.out.println("DHT_UPDATE_REQUEST");
+                        }
+                    }
+                        System.out.println("[Phoebe]: Update Requested");
+                    break;
                 case "/message":
-                        System.out.print("Send to:");
+                        System.out.print("[Message-Command]Send to:");
                         String recieverUUID = scanner.nextLine().trim();
-                        System.out.print("Message to send:");
+                        System.out.print("[Message-Command]Message to send:");
                         String content = scanner.nextLine().trim();
-                        System.out.println("Set Policy requirements (spam enter if none needed)");
-                        System.out.println("Allow user to read? (yes or no):");  // if no just ends the process
+                        System.out.println("[Message-Command]Set Policy requirements (spam enter if none needed)");
+                        System.out.println("[Message-Command]Allow user to read? (yes or no):");  // if no just ends the process
                         String isReadAllow = scanner.nextLine().trim();
                         boolean read = isReadAllow.isEmpty() || isReadAllow.equalsIgnoreCase("yes");
                             if (!read) { System.out.println("([Phoebe]: Read isn't allowed, ending command.)"); break;}
                         
-                        System.out.println("Expiry date/time ( DD/MM/YYYY HH:mm UTC, or leave empty for no expire)");   // <--- Maybe change this to have a check feature of what timezone they want./
+                        System.out.println("[Expiration Time] Expiry date/time ( DD/MM/YYYY HH:mm UTC, or leave empty for no expire)");   // <--- Maybe change this to have a check feature of what timezone they want./
                         String expiryInput = scanner.nextLine().trim();
 
                         StickyPolicy policy = new StickyPolicy.Builder()
@@ -107,15 +126,15 @@ public class Phoebe {
                     break;
 
                     case "/image": 
-                        System.out.println("Filepath:");
+                        System.out.println("[Image-Command]Filepath:");
                         String imgPath = scanner.nextLine().trim();
-                        System.out.println("Send To:");
+                        System.out.println("[Image-Command]Send To:");
                         String imgReciever = scanner.nextLine().trim();
-                        System.out.println("Allow user to read? (yes or no):");
+                        System.out.println("[Image-Command]Allow user to read? (yes or no):");
                         String imgReadAllow = scanner.nextLine().trim();
                         boolean imgRead = imgReadAllow.isEmpty() || imgReadAllow.equalsIgnoreCase("yes");
                         if (!imgRead) { System.out.println("([Phoebe]: Read isn't allowed, ending command.)"); break;}
-                        System.out.println("Expiry date/time ( DD/MM/YYYY HH:mm UTC, or leave empty for no expire");
+                        System.out.println("[Expiration Time] Expiry date/time ( DD/MM/YYYY HH:mm UTC, or leave empty for no expire)");
                         String imgExpiry = scanner.nextLine().trim();
                         StickyPolicy imgPolicy = new StickyPolicy.Builder()
                             .allowRead(imgRead)
@@ -132,15 +151,15 @@ public class Phoebe {
                         break;
 
                     case "/file": 
-                        System.out.println("Filepath:");
+                        System.out.println("[File-Command]Filepath:");
                         String fileFilePath = scanner.nextLine().trim();
-                        System.out.println("Send To:");
+                        System.out.println("[File-Command]Send To:");
                         String fileReciever = scanner.nextLine().trim();
-                        System.out.println("Allow user to read? (yes or no):");
+                        System.out.println("[File-Command]Allow user to read? (yes or no):");
                         String fileReadAllow = scanner.nextLine().trim();
                         boolean fileRead = fileReadAllow.isEmpty() || fileReadAllow.equalsIgnoreCase("yes");
                         if (!fileRead) { System.out.println("([Phoebe]: Read isn't allowed, ending command.)"); break;}
-                        System.out.println("Expiry date/time ( DD/MM/YYYY HH:mm UTC, or leave empty for no expire");
+                        System.out.println("[Expiration Time] Expiry date/time ( DD/MM/YYYY HH:mm UTC, or leave empty for no expire)");
                         String fileExpiry = scanner.nextLine().trim();
                         StickyPolicy filePolicy = new StickyPolicy.Builder()
                             .allowRead(fileRead)
@@ -162,9 +181,18 @@ public class Phoebe {
                         System.out.println("/message - send a message to a known user");
                         System.out.println("/image - send an image to a known user");
                         System.out.println("/file - send a file to a known user");
+                        System.out.println("/info - tells you your info");
+                        System.out.println("/clear - clears the screen for you.");
                         System.out.println("/exit - close Phoebe");
                         System.err.println("For more detailed information, do any command (except /exit) without all prematers");                       
                         break;
+                    case "/info":
+                        System.out.println("");
+                       // System.out.println("Your ip is :" + localIp); <-- fix this
+                        System.out.println("Your port is :" + myPort);
+                        break;    
+                    case "/clear":
+                        break;    
                     case "/exit":
                         System.out.println("Closing Phoebe");
                         System.exit(0);
@@ -191,6 +219,24 @@ public class Phoebe {
                     return true;
                 }
             }
+        }
+        try {
+            DHT.PeerInfo peerInfo = dht.lookup(targetName);
+            System.out.println("[Phoebe]: Not directly connected to " + targetName  + " - connecting via Previous DHT connection knowledge");     
+            connectToPeer(peerInfo.ip, peerInfo.port);
+            synchronized (peers) {
+                for (Peer peer : peers){
+                    System.out.println("[Testing]: " + peer.username + " " + peer.ip + ":" + peer.port);
+                }
+                for (Peer peer : peers) {
+                    if (peer.ip.equals(peerInfo.ip) && peer.port == peerInfo.port){
+                        peer.out.println(message);
+                        return true;
+                    }
+                }
+            }       
+        } catch (Exception e) {
+            System.out.println("[Phoebe]: " + e.getMessage());
         }
         System.out.println("[Phoebe]: User "+ targetName + " Not found");
         return false;
@@ -223,7 +269,7 @@ public class Phoebe {
     private static void connectToPeer(String ip, int port) {
         synchronized (peers) {
             for (Peer peer :peers){
-                if (peer.ip.equals(ip)){
+                if (peer.ip.equals(ip) && peer.port == port){
                     System.out.println("[Phoebe]: Already connected to this peer");
                     return;
                 }
@@ -255,6 +301,7 @@ public class Phoebe {
                 return;
             }
             String peerUsername = "defaultName";
+            int peerListenPort = port;
             synchronized (dht) {
                 for (Map.Entry<String, DHT.PeerInfo> en : dht.getTable().entrySet()) {
                     if (en.getValue().ip.equals(ip)){
@@ -264,19 +311,19 @@ public class Phoebe {
                     
                 }
             }
-            setupStreams(socket, out, input, true, peerUsername);
+            setupStreams(socket, out, input, true, peerUsername,peerListenPort);
             System.out.println("Connected to peer at " + ip + ":" + port);
         } catch (IOException e) {
             System.out.println("Failed to connect to " + ip + ":" + port);
         }
     }
     // New code processes username from connect->peer (for below)
-    private static void setupStreams(Socket socket, PrintWriter out, BufferedReader in, boolean handShakeDone, String knownUsername) throws IOException {
+    private static void setupStreams(Socket socket, PrintWriter out, BufferedReader in, boolean handShakeDone, String knownUsername, int listenport) throws IOException {
         peers.add(new Peer(knownUsername != null ? knownUsername :"defaultName", 
         socket.getInetAddress().getHostAddress(), 
-        socket.getPort(), 
+        listenport, 
         out));
-        new Thread(new PeerHandler(socket, out, in, handShakeDone)).start();
+        new Thread(new PeerHandler(socket, out, in, handShakeDone, listenport)).start();
     }
 
     // Helper to send a message to everyone in the peers list
@@ -303,7 +350,7 @@ public class Phoebe {
                     // When someone connects, set up the streams
                     PrintWriter out = new PrintWriter(socket.getOutputStream(),true);
                     BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                    setupStreams(socket,out, in, false, null);
+                    setupStreams(socket,out, in, false, null,0);
                     System.out.println("A new peer has connected to you!");
                 }
             } catch (IOException e) {
@@ -313,18 +360,21 @@ public class Phoebe {
     }
     // BACKGROUND TASK: Listening to dm client  -- need to make test on this ::::::::::::
 
-    // this needs HEAVY editing, its the biggest connection
+    
+    // this needs HEAVY editing, its the biggest connection .... 12/04/26 -> This really should have been its own file, can i even actually do that no>? Is it too big to *actually* move???
     private static class PeerHandler implements Runnable {
         private Socket socket; 
         private BufferedReader in;
         private PrintWriter out;
         private final boolean handShakeDone;
+        private final int peerListenPort;
 
-        public PeerHandler(Socket socket, PrintWriter out, BufferedReader in, boolean handShakeDone) throws IOException {
+        public PeerHandler(Socket socket, PrintWriter out, BufferedReader in, boolean handShakeDone, int peerListenPort) throws IOException {
             this.socket = socket;
             this.out = out;
             this.in = in;
             this.handShakeDone = handShakeDone;
+            this.peerListenPort = peerListenPort;
         }
         @Override
         public void run() {
@@ -376,7 +426,7 @@ public class Phoebe {
                 try{
                     String nonDefaultName = "defaultName";
                     for (Map.Entry<String, DHT.PeerInfo> en : dht.getTable().entrySet()) {
-                        if (en.getValue().ip.equals(socket.getInetAddress().getHostAddress())){
+                        if (en.getValue().ip.equals(socket.getInetAddress().getHostAddress()) && en.getValue().port == peerListenPort){
                         nonDefaultName = en.getKey();
                         break;
                     }
@@ -386,7 +436,7 @@ public class Phoebe {
                     for (Peer peer : peers){
                         if (peer.out == out){
                             peers.remove(peer);
-                            peers.add(new Peer( realUsername, socket.getInetAddress().getHostAddress(), myPort, out));
+                            peers.add(new Peer( realUsername, socket.getInetAddress().getHostAddress(), peerListenPort, out));
                             break;
                         }
                     }
@@ -408,7 +458,7 @@ public class Phoebe {
                     if (!receiver.equals(username) && !receiver.equals("all")) {
                         continue;
                     }
-                    switch (typeOfData) { 
+                    switch (typeOfData) {   // < _ maybe change this variable name
                         case "text":
                             StickyPolicy policy = StickyPolicy.fromJSON(oculus.getJSONObject("policy"));
                             PolicyEnforcer enforcer = new PolicyEnforcer(policy);
@@ -437,8 +487,29 @@ public class Phoebe {
                                 crow.getString("fileName")
                             );
                             break;
+                            case "update_Request":
+                                JSONObject updateResponse = new JSONObject()
+                                .put("oculus", new JSONObject()
+                                    .put("type", "update_Response")
+                                    .put("timestamp", Instant.now().getEpochSecond())
+                                    .put("dht", dht.toJson()))
+                                .put("crow", new JSONObject()
+                                    .put("proginator", username)
+                                    .put("receiver", sender));   
+                                out.println(updateResponse.toString());
+                                break;
+                            case "update_Response":
+                                try {
+                                    DHT recievedDHT = DHT.fromJson(oculus.getJSONObject("dht"));
+                                    dht.merge(recievedDHT);
+                                    System.out.println("[Phoebe]: DHT table updated");
+                                } catch (Exception e) {
+                                    System.out.println("[Phoebe]: DHT table update failed");
+                                }
+                                
+                                break;    
                         default:
-                            System.out.println("[" + sender + "] sent an unknown message type: " + typeOfData);
+                            System.out.println("[" + sender + "]" + " sent an unknown message type: " + typeOfData);
                             break;
                     }
                   } catch (Exception e) {// Not JSON or malformed, print raw as fallback
