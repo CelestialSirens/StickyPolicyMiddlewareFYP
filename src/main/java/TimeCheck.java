@@ -18,7 +18,7 @@ public class TimeCheck {
         .uri(URI.create("https://timeapi.io/api/time/current/zone?timeZone=UTC"))
         .GET()
         .build();
-        
+
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         JSONObject json = new JSONObject(response.body());
         

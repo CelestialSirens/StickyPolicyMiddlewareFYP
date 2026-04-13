@@ -3,47 +3,45 @@ import java.io.*;
 import java.net.*;
 import java.time.Instant;
 import java.util.*;
-
 import org.json.JSONObject;
- 
-
 public class Phoebe {   
 
     private static final DHT dht = new DHT();
-
     private static final List<Peer> peers = Collections.synchronizedList(new ArrayList<>());
-    private static String username;
-    private static int myPort;
+    private static final List<PendingRequest> pendingRequests = Collections.synchronizedList(new ArrayList<>());
+
+        private static String username;
+        private static int myPort;
+        private static String localIp;
+
     public static void main(String[] args) throws IOException {
         Scanner scanner = new Scanner(System.in);
         System.out.println("--- Welcome to Phoebe ---");
         System.out.print("Enter your username: ");
         username = scanner.nextLine();
-        System.out.print("Enter the port you want to listen on (e.g. 6000): ");
+        System.out.print("Enter the port you want to listen on (any open port between 1 - 50,000): ");
         int myPort = Integer.parseInt(scanner.nextLine());
-        try {
-            String localIp = InetAddress.getLocalHost().getHostAddress();
-            dht.register(username, localIp, myPort);
-            System.out.println("[Testing]: Registed as " + username + " at " + localIp + "  : " + myPort);
-        } catch (Exception e) {
-            System.out.println("[Testing]: " + e.getMessage());
-        }
-        
-        // Server Thread start
+        String localIp = InetAddress.getLocalHost().getHostAddress();
         new Thread(new ServerTask(myPort)).start();
+        try {
+            dht.register(username, localIp, myPort);
+            System.out.println("[Phoebe]: Registed as " + username + " at " + localIp + "  : " + myPort);
+            } catch (Exception e) {
+            System.out.println("[Phoebe-Error]: " + e.getMessage());
+            }        
+        
         System.out.println("You are listening on port " + myPort);
         System.out.println("Please ensure you have merged your tables with another user before attempting to message them.");
-        System.out.println("To connect to other users, type: /connect [username] ");  
-        System.out.println("To specify a user you wish to dm (JSON), type:/message [Username]");
+        System.out.println("To connect to other users, type: /connect");  
+        System.out.println("To message a specific user, use /message");
         System.out.println("When you wish to send an image, use /send_image");
         System.out.println("To send a message, just type it.");
         System.out.println("-------------------------------------------------");
 
-        //USER INPUT While case
-        while (true) {
+        while (true) {    // Remember to remove the "[Testing]:" stuff
             String input = scanner.nextLine();
-
-            if (input.trim().isEmpty()) continue;
+            if (input.trim().isEmpty()) 
+                continue;
 
             String command = input;    
             switch (command) {
@@ -71,7 +69,8 @@ public class Phoebe {
                     } catch (Exception e){
                         System.out.println(e.getMessage() + " ");
                     } 
-                    break;
+                        break;
+
                 case "/initalise":
                         System.out.println("[Table merging] IP:");
                         String initalisedIP = scanner.nextLine().trim();
@@ -86,9 +85,14 @@ public class Phoebe {
                             System.out.println("[Phoebe]: " + e.getMessage());
                         }
                         break;
+
                 case "/update":
                     System.out.println("[Phoebe-Update]: Requesting DHT update from all connected peers...");
                     synchronized (peers) {
+                        if (peers.isEmpty()){
+                            System.out.println("[Phoebe-Update]: No connected peers to request from");
+                            break;
+                        }
                         for (Peer peer : peers){
                             JSONObject updateRequest = new JSONObject()
                         .put("oculus", new JSONObject()
@@ -97,12 +101,42 @@ public class Phoebe {
                         .put("crow", new JSONObject()
                             .put("proginator", username)
                             .put( "reciever", peer.username));
-
-                            peer.out.println("DHT_UPDATE_REQUEST");
+                        peer.out.println(updateRequest.toString());
                         }
                     }
-                        System.out.println("[Phoebe]: Update Requested");
+                        System.out.println("[Phoebe-Update]: Update Requested from peers.");
                     break;
+
+                case "/pending":
+                    synchronized (pendingRequests) {
+                        if (pendingRequests.isEmpty()){
+                            System.out.println("[Phoebe]: No requests");
+                            break;
+                        }
+                    }
+                    List<PendingRequest> toRemove = new ArrayList<>();
+                    for (PendingRequest request : pendingRequests){
+                    String tableContents = String.join("," + dht.getTable().keySet());    
+                    System.out.println("[Phoebe]: A user: " + request.requesterUsername + "requested to merge tables");
+                    System.out.println("[Phoebe]: Your table contains:" + tableContents + "Please check you are comfortable with merging...");
+                    System.out.println("[Phoebe]: Do you accept? (Yes or no)");
+                    String mergeAnswer = scanner.nextLine().trim();
+                        if (mergeAnswer.equalsIgnoreCase("yes") || (mergeAnswer.equalsIgnoreCase("y"))){
+                            JSONObject response = new JSONObject()
+                            .put("oculus", new JSONObject()
+                                .put("type", "update_response")
+                                .put("timestamp", Instant.now().getEpochSecond())
+                                .put("dht", dht.toJson())
+                            .put("crow", new JSONObject())
+                                .put("proginator", username)
+                                .put("receiver", request.requesterUsername));   
+                    System.out.println("[Phoebe]: Table shared with " + request.requesterUsername);
+                    } else {
+                        
+                    }
+                    }
+                    break;
+
                 case "/message":
                         System.out.print("[Message-Command]Send to:");
                         String recieverUUID = scanner.nextLine().trim();
@@ -111,16 +145,13 @@ public class Phoebe {
                         System.out.println("[Message-Command]Set Policy requirements (spam enter if none needed)");
                         System.out.println("[Message-Command]Allow user to read? (yes or no):");  // if no just ends the process
                         String isReadAllow = scanner.nextLine().trim();
-                        boolean read = isReadAllow.isEmpty() || isReadAllow.equalsIgnoreCase("yes");
+                        boolean read = isReadAllow.isEmpty() || isReadAllow.equalsIgnoreCase("yes") || isReadAllow.equalsIgnoreCase("y");
                             if (!read) { System.out.println("([Phoebe]: Read isn't allowed, ending command.)"); break;}
                         
                         System.out.println("[Expiration Time] Expiry date/time ( DD/MM/YYYY HH:mm UTC, or leave empty for no expire)");   // <--- Maybe change this to have a check feature of what timezone they want./
                         String expiryInput = scanner.nextLine().trim();
 
-                        StickyPolicy policy = new StickyPolicy.Builder()
-                            .allowRead(read)
-                            .expiryFromInput(expiryInput)
-                            .build();
+                        StickyPolicy policy = new StickyPolicy.Builder().allowRead(read).expiryFromInput(expiryInput).build();
 
                         sendTo(recieverUUID, jsonBuilder(username, recieverUUID, content, "text", "", policy));
                     break;
@@ -132,14 +163,11 @@ public class Phoebe {
                         String imgReciever = scanner.nextLine().trim();
                         System.out.println("[Image-Command]Allow user to read? (yes or no):");
                         String imgReadAllow = scanner.nextLine().trim();
-                        boolean imgRead = imgReadAllow.isEmpty() || imgReadAllow.equalsIgnoreCase("yes");
+                        boolean imgRead = imgReadAllow.isEmpty() || imgReadAllow.equalsIgnoreCase("yes") || imgReadAllow.equalsIgnoreCase("y");
                         if (!imgRead) { System.out.println("([Phoebe]: Read isn't allowed, ending command.)"); break;}
                         System.out.println("[Expiration Time] Expiry date/time ( DD/MM/YYYY HH:mm UTC, or leave empty for no expire)");
                         String imgExpiry = scanner.nextLine().trim();
-                        StickyPolicy imgPolicy = new StickyPolicy.Builder()
-                            .allowRead(imgRead)
-                            .expiryFromInput(imgExpiry)
-                            .build();
+                        StickyPolicy imgPolicy = new StickyPolicy.Builder().allowRead(imgRead).expiryFromInput(imgExpiry).build();
                         try {
                             String ext = FileConversions.getExtension(imgPath);
                             String b64 = FileConversions.imageToB64(imgPath);
@@ -148,7 +176,7 @@ public class Phoebe {
                         } catch (Exception e) {
                             System.out.println("[Phoebe]: "+ e.getMessage());
                         }
-                        break;
+                    break;
 
                     case "/file": 
                         System.out.println("[File-Command]Filepath:");
@@ -157,14 +185,11 @@ public class Phoebe {
                         String fileReciever = scanner.nextLine().trim();
                         System.out.println("[File-Command]Allow user to read? (yes or no):");
                         String fileReadAllow = scanner.nextLine().trim();
-                        boolean fileRead = fileReadAllow.isEmpty() || fileReadAllow.equalsIgnoreCase("yes");
+                        boolean fileRead = fileReadAllow.isEmpty() || fileReadAllow.equalsIgnoreCase("yes") || fileReadAllow.equalsIgnoreCase("y");
                         if (!fileRead) { System.out.println("([Phoebe]: Read isn't allowed, ending command.)"); break;}
                         System.out.println("[Expiration Time] Expiry date/time ( DD/MM/YYYY HH:mm UTC, or leave empty for no expire)");
                         String fileExpiry = scanner.nextLine().trim();
-                        StickyPolicy filePolicy = new StickyPolicy.Builder()
-                            .allowRead(fileRead)
-                            .expiryFromInput(fileExpiry)
-                            .build();
+                        StickyPolicy filePolicy = new StickyPolicy.Builder().allowRead(fileRead).expiryFromInput(fileExpiry).build();
                         try {
                             String ext = FileConversions.getExtension(fileFilePath);
                             String b64 = FileConversions.fileToB64(fileFilePath); 
@@ -174,6 +199,7 @@ public class Phoebe {
                             System.out.println("[Phoebe]: "+ e.getMessage());
                         }
                         break;  
+                        
                     case "/help":
                         System.out.println("Write listed commands and their features here.");
                         System.out.println("/initalise - need to do this with a known user to initiate your tables");
@@ -186,13 +212,12 @@ public class Phoebe {
                         System.out.println("/exit - close Phoebe");
                         System.err.println("For more detailed information, do any command (except /exit) without all prematers");                       
                         break;
+
                     case "/info":
-                        System.out.println("");
-                       // System.out.println("Your ip is :" + localIp); <-- fix this
-                        System.out.println("Your port is :" + myPort);
-                        break;    
-                    case "/clear":
-                        break;    
+                        System.out.println("Your ip is: " + localIp); 
+                        System.out.println("Your port is: " + myPort);
+                        break;
+
                     case "/exit":
                         System.out.println("Closing Phoebe");
                         System.exit(0);
@@ -289,9 +314,9 @@ public class Phoebe {
                 try {
                     DHT peerDHT = DHT.fromJson(new JSONObject(peerDHTJson));
                     dht.merge(peerDHT);
-                System.out.println("[Testing]: Tables merged - Line 214");
+                System.out.println("[Testing]: Tables merged - Line 305");
             } catch (Exception e){
-                System.out.println("[Testing]: Tables failed to merge - 216");
+                System.out.println("[Testing]: Tables failed to merge - 307");
             }
         }
             String ready = input.readLine();
@@ -307,8 +332,7 @@ public class Phoebe {
                     if (en.getValue().ip.equals(ip)){
                         peerUsername = en.getKey();
                         break;
-                    }
-                    
+                    } 
                 }
             }
             setupStreams(socket, out, input, true, peerUsername,peerListenPort);
@@ -361,7 +385,9 @@ public class Phoebe {
     // BACKGROUND TASK: Listening to dm client  -- need to make test on this ::::::::::::
 
     
-    // this needs HEAVY editing, its the biggest connection .... 12/04/26 -> This really should have been its own file, can i even actually do that no>? Is it too big to *actually* move???
+    // this needs HEAVY editing, its the biggest connection .... 12/04/26 -> This really should have been its own file, can i even actually do that now? Is it too big to *actually* move???
+    // i think this is honestly the worst class ive ever written. I'm reading through it and genuinely crying at how messy it is and how it feels so unoptimised
+    // not even just the class, this whole project i hate . It cant do what i wanted it to do i didnt understand 
     private static class PeerHandler implements Runnable {
         private Socket socket; 
         private BufferedReader in;
@@ -456,38 +482,33 @@ public class Phoebe {
                     String sender = crow.getString("proginator");
                     String receiver = crow.getString("receiver");
                     if (!receiver.equals(username) && !receiver.equals("all")) {
-                        continue;
+                            continue;
                     }
                     switch (typeOfData) {   // < _ maybe change this variable name
                         case "text":
                             StickyPolicy policy = StickyPolicy.fromJSON(oculus.getJSONObject("policy"));
                             PolicyEnforcer enforcer = new PolicyEnforcer(policy);
-                            if (!enforcer.canRead()) break;
+                            if (!enforcer.canRead())        break;
                             System.out.println("[" + sender + "]: " + crow.getString("message"));
                             break;
+
                         case "image":
                             StickyPolicy imgPolicy = StickyPolicy.fromJSON(oculus.getJSONObject("policy"));
                             PolicyEnforcer imgEnforcer = new PolicyEnforcer(imgPolicy);
-                            if (!imgEnforcer.canRead()) break; 
+                            if (!imgEnforcer.canRead())     break; 
                             System.out.println("["+ sender +"]: " + "send an image");
-                            FileConversions.B64ToImage(
-                                sender,
-                                crow.getString("message"),
-                                crow.getString("fileName")
-                            );
+                            FileConversions.B64ToImage(sender,crow.getString("message"), crow.getString("fileName"));
                             break;
+                            
                         case "file":   // do same as ^ when this one is made
                             StickyPolicy filePolicy = StickyPolicy.fromJSON(oculus.getJSONObject("policy"));
                             PolicyEnforcer fileEnforcer = new PolicyEnforcer(filePolicy);
-                            if (!fileEnforcer.canRead()) break; 
+                            if (!fileEnforcer.canRead())    break; 
                             System.out.println("["+ sender +"]: " + "send a file");
-                            FileConversions.B64ToFile(
-                                sender,
-                                crow.getString("message"),
-                                crow.getString("fileName")
-                            );
+                            FileConversions.B64ToFile(sender,crow.getString("message"),crow.getString("fileName"));
                             break;
-                            case "update_Request":
+
+                        case "update_Request":
                                 JSONObject updateResponse = new JSONObject()
                                 .put("oculus", new JSONObject()
                                     .put("type", "update_Response")
@@ -498,7 +519,7 @@ public class Phoebe {
                                     .put("receiver", sender));   
                                 out.println(updateResponse.toString());
                                 break;
-                            case "update_Response":
+                        case "update_Response":
                                 try {
                                     DHT recievedDHT = DHT.fromJson(oculus.getJSONObject("dht"));
                                     dht.merge(recievedDHT);
@@ -506,11 +527,11 @@ public class Phoebe {
                                 } catch (Exception e) {
                                     System.out.println("[Phoebe]: DHT table update failed");
                                 }
-                                
                                 break;    
+                        
                         default:
                             System.out.println("[" + sender + "]" + " sent an unknown message type: " + typeOfData);
-                            break;
+                                break;
                     }
                   } catch (Exception e) {// Not JSON or malformed, print raw as fallback
                     System.out.println(message);
@@ -533,7 +554,7 @@ public class Phoebe {
             }
         }
     }
-// info for broadcast stuff 
+        // Random inner classes that dont really need to be in other classes since they are useful here ^-^
     public static class Peer {
         public final String username;
         public final String ip;
@@ -553,7 +574,6 @@ public class Phoebe {
         public PolicyEnforcer(StickyPolicy policy){
             this.policy = policy;
         }
-
         public boolean canRead(){
             if (policy.isExpired()){
                 System.out.println("[Phoebe]: Message Blocked: Permissions have expired");
@@ -565,11 +585,20 @@ public class Phoebe {
             }
             return true;
         }
-
-
         // public boolean canForward(){
         //   if ()}
-     
+    public static class PendingRequest {
+        public final String requesterUsername;
+        public final PrintWriter requesterOut;
+        public final long timestamp;
 
+        public PendingRequest(String requesterUsername, PrintWriter requesterOut, long timestamp){
+            this.requesterUsername = requesterUsername;
+            this.requesterOut = requesterOut;
+            this.timestamp = timestamp;
+        }
+    }
 }
+
+    
 }
