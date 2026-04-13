@@ -129,10 +129,19 @@ public class Phoebe {
                                 .put("dht", dht.toJson())
                             .put("crow", new JSONObject())
                                 .put("proginator", username)
-                                .put("receiver", request.requesterUsername));   
+                                .put("receiever", request.requesterUsername));   
+                        request.requesterOut.println(response.toString());
                     System.out.println("[Phoebe]: Table shared with " + request.requesterUsername);
                     } else {
-                        
+                        JSONObject denied = new JSONObject()
+                        .put("oculus", new JSONObject()
+                            .put("type", "update_denied")
+                            .put("timestamp", Instant.now().getEpochSecond()))
+                        .put("crow", new JSONObject()
+                            .put("proginator", username)
+                            .put("receiever", request.requesterUsername));    
+                        request.requesterOut.println(denied.toString());
+                        System.out.println("[Phoebe]: Request from " + request.requesterUsername + "denied");
                     }
                     }
                     break;
@@ -509,15 +518,17 @@ public class Phoebe {
                             break;
 
                         case "update_Request":
-                                JSONObject updateResponse = new JSONObject()
-                                .put("oculus", new JSONObject()
-                                    .put("type", "update_Response")
-                                    .put("timestamp", Instant.now().getEpochSecond())
-                                    .put("dht", dht.toJson()))
-                                .put("crow", new JSONObject()
-                                    .put("proginator", username)
-                                    .put("receiver", sender));   
-                                out.println(updateResponse.toString());
+                                try {
+                                    PendingRequest request = new PendingRequest(
+                                        sender,
+                                        out,
+                                        Instant.now().getEpochSecond()
+                                    );
+                                    pendingRequests.add(request);
+                                    System.out.println("[Phoebe]: " + sender + " has requested a DHT sync. Type /pending to review");
+                                } catch (Exception e) {
+                                    System.out.println("[Phoebe]: Failed to process Update Request.");
+                                }
                                 break;
                         case "update_Response":
                                 try {
@@ -528,6 +539,9 @@ public class Phoebe {
                                     System.out.println("[Phoebe]: DHT table update failed");
                                 }
                                 break;    
+                        case "update_denied":
+                            System.out.println("[Phoebe]: " + sender + " denied DHT sync request");
+                            break;
                         
                         default:
                             System.out.println("[" + sender + "]" + " sent an unknown message type: " + typeOfData);
@@ -587,7 +601,8 @@ public class Phoebe {
         }
         // public boolean canForward(){
         //   if ()}
-    public static class PendingRequest {
+}
+public static class PendingRequest {
         public final String requesterUsername;
         public final PrintWriter requesterOut;
         public final long timestamp;
@@ -598,7 +613,5 @@ public class Phoebe {
             this.timestamp = timestamp;
         }
     }
-}
-
     
 }
