@@ -112,8 +112,7 @@ public class Phoebe {
                         if (pendingRequests.isEmpty()){
                             System.out.println("[Phoebe]: No requests");
                             break;
-                        }
-                    }
+                        } 
                     List<PendingRequest> toRemove = new ArrayList<>();
                     for (PendingRequest request : pendingRequests){
                     String tableContents = String.join("," + dht.getTable().keySet());    
@@ -142,8 +141,11 @@ public class Phoebe {
                             .put("receiever", request.requesterUsername));    
                         request.requesterOut.println(denied.toString());
                         System.out.println("[Phoebe]: Request from " + request.requesterUsername + "denied");
+                        }
+                        toRemove.add(request);
                     }
-                    }
+                    pendingRequests.removeAll(toRemove);
+                }    
                     break;
 
                 case "/message":
