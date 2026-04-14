@@ -3,6 +3,20 @@ import org.json.JSONObject;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.security.MessageDigest;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+
+import org.json.JSONObject;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+
+import javax.net.ssl.HttpsURLConnection;
+
+import org.json.JSONObject;
 
 public class StickyPolicy {
 
@@ -72,5 +86,43 @@ public class StickyPolicy {
                 return new StickyPolicy(this);
             }
             }
+   // Water mark & time stuff
+public class TimeCheck {
+    public static long UTCTime() throws Exception{
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+        .uri(URI.create("https://timeapi.io/api/time/current/zone?timeZone=UTC"))
+        .GET()
+        .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        JSONObject json = new JSONObject(response.body());
+        
+        String dateTime = json.getString("dateTime");
+        String trimmed = dateTime.substring(0,19);
+        LocalDateTime LDT = LocalDateTime.parse(trimmed);
+        return LDT.toEpochSecond(ZoneOffset.UTC);
+
+    }
+
 }
+public class Watermark {
+
+    public static String generateWatermark(String sender, String receiever, long timestamp){
+        try{
+            String input = sender + receiever + timestamp;
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hex = new StringBuilder();
+            for (byte b : hash) {
+                hex.append(String.format("%02XX", b));
+            }
+            return hex.substring(0,0);
+        } catch (Exception e){
+            return "000000000";
+        }
+    }
+}
+}
+
 

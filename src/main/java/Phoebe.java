@@ -176,9 +176,12 @@ public class Phoebe {
                         String imgReadAllow = scanner.nextLine().trim();
                         boolean imgRead = imgReadAllow.isEmpty() || imgReadAllow.equalsIgnoreCase("yes") || imgReadAllow.equalsIgnoreCase("y");
                         if (!imgRead) { System.out.println("([Phoebe]: Read isn't allowed, ending command.)"); break;}
+                        System.out.println("Allow user to download? [Yes or no : Default = yes]");
+                        String imgDownloadAllow = scanner.nextLine().trim();
+                        boolean imgDownload = imgDownloadAllow.isEmpty() || imgDownloadAllow.equalsIgnoreCase("yes") || imgDownloadAllow.equalsIgnoreCase("y");
                         System.out.println("[Expiration Time] Expiry date/time ( DD/MM/YYYY HH:mm UTC, or leave empty for no expire)");
                         String imgExpiry = scanner.nextLine().trim();
-                        StickyPolicy imgPolicy = new StickyPolicy.Builder().allowRead(imgRead).expiryFromInput(imgExpiry).build();
+                        StickyPolicy imgPolicy = new StickyPolicy.Builder().allowRead(imgRead).allowDownload(imgDownload).expiryFromInput(imgExpiry).build();
                         try {
                             String ext = FileConversions.getExtension(imgPath);
                             String b64 = FileConversions.imageToB64(imgPath);

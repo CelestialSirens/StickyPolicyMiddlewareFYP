@@ -1,6 +1,8 @@
 
 import javax.crypto.*;
 import javax.crypto.spec.*;
+
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.*;
 
@@ -43,7 +45,7 @@ public class E2eeManager {
         Cipher cipher = Cipher.getInstance("AES/GCM");
         cipher.init(Cipher.ENCRYPT_MODE, sharedSecret, new GCMParameterSpec(128,iv));
 
-        byte[] ciphertext = cipher.doFinal(plaintext.getBytes("UTF-8"));
+        byte[] ciphertext = cipher.doFinal(plaintext.getBytes(StandardCharsets.UTF_8));
         byte[] attachedMsg = new byte[iv.length + ciphertext.length];
 
         System.arraycopy(iv, 0, attachedMsg, 0, iv.length);
