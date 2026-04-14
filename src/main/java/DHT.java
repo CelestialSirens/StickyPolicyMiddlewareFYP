@@ -8,20 +8,20 @@ public class DHT {
 
     private final HashMap<String, PeerInfo> table = new HashMap<>();
     private long Time() throws Exception{
-        return TimeCheck.UTCTime();
+        return StickyPolicy.TimeCheck.UTCTime();
     }
 
     public void register(String username, String ip, int port) throws Exception{
         if (table.containsKey(username)){
             PeerInfo exists = table.get(username);
             if (exists.ip.equals(ip)){
-                table.put(username, new PeerInfo(ip,port, TimeCheck.UTCTime()));
+                table.put(username, new PeerInfo(ip,port, StickyPolicy.TimeCheck.UTCTime()));
                 System.out.println("[Phoebe]: Updated entry for " + username);
             } else {
                 throw new Exception("[Phoebe]: Username " + username + "is already taken");
             }   
         } else {
-            table.put(username, new PeerInfo(ip,port, TimeCheck.UTCTime()));
+            table.put(username, new PeerInfo(ip,port, StickyPolicy.TimeCheck.UTCTime()));
             System.out.println("[Phoebe]: Registed " + username);
         }
     }
