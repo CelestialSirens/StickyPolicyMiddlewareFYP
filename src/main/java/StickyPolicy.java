@@ -8,10 +8,12 @@ public class StickyPolicy {
 
         private final boolean allowRead;
         private final long expiryEpoch;
+        private final boolean allowDownload;
 
         private StickyPolicy(Builder builder) {
             this.allowRead = builder.allowRead;
             this.expiryEpoch = builder.expiryEpoch;
+            this.allowDownload = builder.allowDownload;
         }
         public boolean canRead() {return allowRead;}
         public boolean isExpired() {
@@ -27,19 +29,22 @@ public class StickyPolicy {
         public JSONObject toJSON() {
             return new JSONObject()
                     .put("allowRead", allowRead)
-                    .put("expiryEpoch", expiryEpoch);
+                    .put("expiryEpoch", expiryEpoch)
+                    .put("allowDownload",allowDownload);
         }
 
         public static StickyPolicy fromJSON(JSONObject json) {
             return new Builder()
             .allowRead(json.getBoolean("allowRead"))
             .expiryEpoch(json.getLong("expiryEpoch"))
+            .allowDownload(json.getBoolean("allowDownload"))
             .build();
         }
 
         public static class Builder {
             private boolean allowRead =true;
             private long expiryEpoch =0;
+            private boolean allowDownload =true;
 
             public Builder allowRead(boolean v){
                 this.allowRead = v;
@@ -47,6 +52,10 @@ public class StickyPolicy {
             }
             public Builder expiryEpoch(long v){
                 this.expiryEpoch =v;
+                return this;
+            }
+            public Builder allowDownload(boolean v){
+                this.allowDownload =v;
                 return this;
             }
             public Builder expiryFromInput(String input){
