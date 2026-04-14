@@ -100,7 +100,7 @@ public class Phoebe {
                             .put("timestampe", Instant.now().getEpochSecond()))
                         .put("crow", new JSONObject()
                             .put("proginator", username)
-                            .put( "reciever", peer.username));
+                            .put( "receiver", peer.username));
                         peer.out.println(updateRequest.toString());
                         }
                     }
@@ -115,9 +115,9 @@ public class Phoebe {
                         } 
                     List<PendingRequest> toRemove = new ArrayList<>();
                     for (PendingRequest request : pendingRequests){
-                    String tableContents = String.join("," + dht.getTable().keySet());    
-                    System.out.println("[Phoebe]: A user: " + request.requesterUsername + "requested to merge tables");
-                    System.out.println("[Phoebe]: Your table contains:" + tableContents + "Please check you are comfortable with merging...");
+                    String tableContents = String.join(",", dht.getTable().keySet());    
+                    System.out.println("[Phoebe]: A user: " + request.requesterUsername + " requested to merge tables");
+                    System.out.println("[Phoebe]: Your table contains: " + tableContents + "Please check you are comfortable with merging...");
                     System.out.println("[Phoebe]: Do you accept? (Yes or no)");
                     String mergeAnswer = scanner.nextLine().trim();
                         if (mergeAnswer.equalsIgnoreCase("yes") || (mergeAnswer.equalsIgnoreCase("y"))){
@@ -150,7 +150,7 @@ public class Phoebe {
 
                 case "/message":
                         System.out.print("[Message-Command]Send to:");
-                        String recieverUUID = scanner.nextLine().trim();
+                        String receiverUUID = scanner.nextLine().trim();
                         System.out.print("[Message-Command]Message to send:");
                         String content = scanner.nextLine().trim();
                         System.out.println("[Message-Command]Set Policy requirements (spam enter if none needed)");
@@ -164,14 +164,14 @@ public class Phoebe {
 
                         StickyPolicy policy = new StickyPolicy.Builder().allowRead(read).expiryFromInput(expiryInput).build();
 
-                        sendTo(recieverUUID, jsonBuilder(username, recieverUUID, content, "text", "", policy));
+                        sendTo(receiverUUID, jsonBuilder(username, receiverUUID, content, "text", "", policy));
                     break;
 
                     case "/image": 
                         System.out.println("[Image-Command]Filepath:");
                         String imgPath = scanner.nextLine().trim();
                         System.out.println("[Image-Command]Send To:");
-                        String imgReciever = scanner.nextLine().trim();
+                        String imgReceiver = scanner.nextLine().trim();
                         System.out.println("[Image-Command]Allow user to read? (yes or no):");
                         String imgReadAllow = scanner.nextLine().trim();
                         boolean imgRead = imgReadAllow.isEmpty() || imgReadAllow.equalsIgnoreCase("yes") || imgReadAllow.equalsIgnoreCase("y");
@@ -185,8 +185,8 @@ public class Phoebe {
                         try {
                             String ext = FileConversions.getExtension(imgPath);
                             String b64 = FileConversions.imageToB64(imgPath);
-                            String imgJson = jsonBuilder(username, imgReciever, b64, "image", ext, imgPolicy);
-                            sendTo(imgReciever, imgJson);
+                            String imgJson = jsonBuilder(username, imgReceiver, b64, "image", ext, imgPolicy);
+                            sendTo(imgReceiver, imgJson);
                         } catch (Exception e) {
                             System.out.println("[Phoebe]: "+ e.getMessage());
                         }
@@ -196,7 +196,7 @@ public class Phoebe {
                         System.out.println("[File-Command]Filepath:");
                         String fileFilePath = scanner.nextLine().trim();
                         System.out.println("[File-Command]Send To:");
-                        String fileReciever = scanner.nextLine().trim();
+                        String fileReceiver = scanner.nextLine().trim();
                         System.out.println("[File-Command]Allow user to read? (yes or no):");
                         String fileReadAllow = scanner.nextLine().trim();
                         boolean fileRead = fileReadAllow.isEmpty() || fileReadAllow.equalsIgnoreCase("yes") || fileReadAllow.equalsIgnoreCase("y");
@@ -207,8 +207,8 @@ public class Phoebe {
                         try {
                             String ext = FileConversions.getExtension(fileFilePath);
                             String b64 = FileConversions.fileToB64(fileFilePath); 
-                            String fileJson = jsonBuilder(username, fileReciever, b64, "file", ext, filePolicy);
-                            sendTo(fileReciever, fileJson);
+                            String fileJson = jsonBuilder(username, fileReceiver, b64, "file", ext, filePolicy);
+                            sendTo(fileReceiver, fileJson);
                         } catch (Exception e) {
                             System.out.println("[Phoebe]: "+ e.getMessage());
                         }
@@ -284,11 +284,11 @@ public class Phoebe {
 
     // -- Json Code below -- 
 // Edit this all its ass . For those not me reading, crow = message Oculus = logs of message
-   public static String jsonBuilder(String senderUsername, String reciverUsername, String message, String typeOfData, String fileName, StickyPolicy policy){
+   public static String jsonBuilder(String senderUsername, String receiverUsername, String message, String typeOfData, String fileName, StickyPolicy policy){
         
     JSONObject crow = new JSONObject()
     .put("proginator", senderUsername)
-    .put("receiver", reciverUsername)
+    .put("receiver", receiverUsername)
     .put("message", message)
     .put("fileName", fileName);
 
@@ -461,7 +461,7 @@ public class Phoebe {
                         }
                     }
                 }
-                System.out.println("[Phoebe]:" + senderUsername + " " + "has connected.");
+                System.out.println("[Phoebe]: " + senderUsername + " " + "has connected.");
                 } else 
                 try{
                     String nonDefaultName = "defaultName";
@@ -522,7 +522,7 @@ public class Phoebe {
                             FileConversions.B64ToFile(sender,crow.getString("message"),crow.getString("fileName"));
                             break;
 
-                        case "update_Request":
+                        case "update_request":
                                 try {
                                     PendingRequest request = new PendingRequest(
                                         sender,
@@ -535,11 +535,11 @@ public class Phoebe {
                                     System.out.println("[Phoebe]: Failed to process Update Request.");
                                 }
                                 break;
-                        case "update_Response":
+                        case "update_response":
                                 try {
-                                    DHT recievedDHT = DHT.fromJson(oculus.getJSONObject("dht"));
-                                    dht.merge(recievedDHT);
-                                    System.out.println("[Phoebe]: DHT table updated");
+                                    DHT receivedDHT = DHT.fromJson(oculus.getJSONObject("dht"));
+                                    dht.merge(receivedDHT);
+                                    System.out.println("[Phoebe]: DHT table updated from" + sender);
                                 } catch (Exception e) {
                                     System.out.println("[Phoebe]: DHT table update failed");
                                 }
