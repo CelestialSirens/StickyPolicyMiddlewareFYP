@@ -44,8 +44,8 @@ public class Phoebe {
                 continue;
 
             String command = input;    
-            switch (command) {
-                case "/connect":   
+            switch (command.toUpperCase()) {
+                case "/CONNECT":   
                     System.out.println("Username to connect to:");
                     String connectUsername = scanner.nextLine().trim();
 
@@ -71,7 +71,7 @@ public class Phoebe {
                     } 
                         break;
 
-                case "/initalise":
+                case "/INITALISE":
                         System.out.println("[Table merging] IP:");
                         String initalisedIP = scanner.nextLine().trim();
                         System.out.println("[Table merging] Port:");
@@ -86,7 +86,7 @@ public class Phoebe {
                         }
                         break;
 
-                case "/update":
+                case "/UPDATE":
                     System.out.println("[Phoebe-Update]: Requesting DHT update from all connected peers...");
                     synchronized (peers) {
                         if (peers.isEmpty()){
@@ -95,19 +95,19 @@ public class Phoebe {
                         }
                         for (Peer peer : peers){
                             JSONObject updateRequest = new JSONObject()
-                        .put("oculus", new JSONObject()
-                            .put("type", "update_request")
-                            .put("timestamp", Instant.now().getEpochSecond()))
-                        .put("crow", new JSONObject()
-                            .put("proginator", username)
-                            .put( "receiver", peer.username));
+                        .put("Oculus", new JSONObject()
+                            .put("Type", "update_request")
+                            .put("Timestamp", Instant.now().getEpochSecond()))
+                        .put("Crow", new JSONObject()
+                            .put("Proginator", username)
+                            .put( "Receiver", peer.username));
                         peer.out.println(updateRequest.toString());
                         }
                     }
                         System.out.println("[Phoebe-Update]: Update Requested from peers.");
                     break;
 
-                case "/pending":
+                case "/PENDING":
                     synchronized (pendingRequests) {
                         if (pendingRequests.isEmpty()){
                             System.out.println("[Phoebe]: No requests");
@@ -122,23 +122,23 @@ public class Phoebe {
                     String mergeAnswer = scanner.nextLine().trim();
                         if (mergeAnswer.equalsIgnoreCase("yes") || (mergeAnswer.equalsIgnoreCase("y"))){
                             JSONObject response = new JSONObject()
-                            .put("oculus", new JSONObject()
-                                .put("type", "update_response")
-                                .put("timestamp", Instant.now().getEpochSecond())
-                                .put("dht", dht.toJson())
-                            .put("crow", new JSONObject())
-                                .put("proginator", username)
-                                .put("receiever", request.requesterUsername));   
+                            .put("Oculus", new JSONObject()
+                                .put("Type", "update_response")
+                                .put("Timestamp", Instant.now().getEpochSecond())
+                                .put("DHT", dht.toJson())
+                            .put("Crow", new JSONObject())
+                                .put("Proginator", username)
+                                .put("Receiever", request.requesterUsername));   
                         request.requesterOut.println(response.toString());
                     System.out.println("[Phoebe]: Table shared with " + request.requesterUsername);
                     } else {
                         JSONObject denied = new JSONObject()
-                        .put("oculus", new JSONObject()
-                            .put("type", "update_denied")
-                            .put("timestamp", Instant.now().getEpochSecond()))
-                        .put("crow", new JSONObject()
-                            .put("proginator", username)
-                            .put("receiever", request.requesterUsername));    
+                        .put("Oculus", new JSONObject()
+                            .put("Type", "update_denied")
+                            .put("Timestamp", Instant.now().getEpochSecond()))
+                        .put("Crow", new JSONObject()
+                            .put("Proginator", username)
+                            .put("Receiever", request.requesterUsername));    
                         request.requesterOut.println(denied.toString());
                         System.out.println("[Phoebe]: Request from " + request.requesterUsername + "denied");
                         }
@@ -148,89 +148,96 @@ public class Phoebe {
                 }    
                     break;
 
-                case "/message":
+                case "/MESSAGE":
                         System.out.print("[Message-Command]Send to:");
                         String receiverUUID = scanner.nextLine().trim();
                         System.out.print("[Message-Command]Message to send:");
                         String content = scanner.nextLine().trim();
-                        System.out.println("[Message-Command]Set Policy requirements (spam enter if none needed)");
+                        System.out.println("[Message-Command]Set Policy requirements");
                         System.out.println("[Message-Command]Allow user to read? (yes or no):");  // if no just ends the process
                         String isReadAllow = scanner.nextLine().trim();
-                        boolean read = isReadAllow.isEmpty() || isReadAllow.equalsIgnoreCase("yes") || isReadAllow.equalsIgnoreCase("y");
+                        boolean read = isReadAllow.isEmpty() || isReadAllow.equalsIgnoreCase("yes") 
+                        || isReadAllow.equalsIgnoreCase("y");
                             if (!read) { System.out.println("([Phoebe]: Read isn't allowed, ending command.)"); break;}
                         System.out.println("[Expiration Time] Expiry date/time ( DD/MM/YYYY HH:mm UTC, or leave empty for no expire)");   
                         String expiryInput = scanner.nextLine().trim();
                         StickyPolicy policy = new StickyPolicy.Builder().allowRead(read).expiryFromInput(expiryInput).build();
-                            sendTo(receiverUUID, jsonBuilder(username, receiverUUID, content, "text", "", policy));
+                            sendTo(receiverUUID, jsonBuilder(username, receiverUUID, content, "Text", "", policy));
                     break;
 
-                    case "/image": 
+                    case "/IMAGE": 
                         System.out.println("[Image-Command]Filepath:");
                         String imgPath = scanner.nextLine().trim();
                         System.out.println("[Image-Command]Send To:");
                         String imgReceiver = scanner.nextLine().trim();
                         System.out.println("[Image-Command]Allow user to read? (yes or no):");
                         String imgReadAllow = scanner.nextLine().trim();
-                        boolean imgRead = imgReadAllow.isEmpty() || imgReadAllow.equalsIgnoreCase("yes") || imgReadAllow.equalsIgnoreCase("y");
+                        boolean imgRead = imgReadAllow.isEmpty() || imgReadAllow.equalsIgnoreCase("yes") 
+                        || imgReadAllow.equalsIgnoreCase("y");
                         if (!imgRead) { System.out.println("([Phoebe]: Read isn't allowed, ending command.)"); break;}
-                        System.out.println("Allow user to download? [Yes or no : Default = yes]");
+                        System.out.println("Allow user to download? [Yes or No : Default = Yes]");
                         String imgDownloadAllow = scanner.nextLine().trim();
-                        boolean imgDownload = imgDownloadAllow.isEmpty() || imgDownloadAllow.equalsIgnoreCase("yes") || imgDownloadAllow.equalsIgnoreCase("y");
+                        boolean imgDownload = imgDownloadAllow.isEmpty() || imgDownloadAllow.equalsIgnoreCase("yes") 
+                        || imgDownloadAllow.equalsIgnoreCase("y");
                         System.out.println("[Expiration Time] Expiry date/time ( DD/MM/YYYY HH:mm UTC, or leave empty for no expire)");
                         String imgExpiry = scanner.nextLine().trim();
                         StickyPolicy imgPolicy = new StickyPolicy.Builder().allowRead(imgRead).allowDownload(imgDownload).expiryFromInput(imgExpiry).build();
                         try {
                             String ext = FileConversions.getExtension(imgPath);
                             String b64 = FileConversions.imageToB64(imgPath);
-                            String imgJson = jsonBuilder(username, imgReceiver, b64, "image", ext, imgPolicy);
+                            String imgJson = jsonBuilder(username, imgReceiver, b64, "Image", ext, imgPolicy);
                             sendTo(imgReceiver, imgJson);
                         } catch (Exception e) {
                             System.out.println("[Phoebe]: "+ e.getMessage());
                         }
                     break;
 
-                    case "/file": 
+                    case "/FILE": 
                         System.out.println("[File-Command]Filepath:");
                         String fileFilePath = scanner.nextLine().trim();
                         System.out.println("[File-Command]Send To:");
                         String fileReceiver = scanner.nextLine().trim();
                         System.out.println("[File-Command]Allow user to read? (yes or no):");
                         String fileReadAllow = scanner.nextLine().trim();
-                        boolean fileRead = fileReadAllow.isEmpty() || fileReadAllow.equalsIgnoreCase("yes") || fileReadAllow.equalsIgnoreCase("y");
+                        boolean fileRead = fileReadAllow.isEmpty() || 
+                        fileReadAllow.equalsIgnoreCase("yes") || fileReadAllow.equalsIgnoreCase("y");
                         if (!fileRead) { System.out.println("([Phoebe]: Read isn't allowed, ending command.)"); break;}
+                        System.out.println("Allow user to download? [Yes or No : Default = Yes]");
+                        String fileDownloadAllow = scanner.nextLine();
+                        boolean fileDownload = fileDownloadAllow.isEmpty() || fileDownloadAllow.equalsIgnoreCase("yes")
+                        || fileDownloadAllow.equalsIgnoreCase("y"); 
                         System.out.println("[Expiration Time] Expiry date/time ( DD/MM/YYYY HH:mm UTC, or leave empty for no expire)");
                         String fileExpiry = scanner.nextLine().trim();
-                        StickyPolicy filePolicy = new StickyPolicy.Builder().allowRead(fileRead).expiryFromInput(fileExpiry).build();
+                        StickyPolicy filePolicy = new StickyPolicy.Builder().allowRead(fileRead).allowDownload(fileDownload).expiryFromInput(fileExpiry).build();
                         try {
                             String ext = FileConversions.getExtension(fileFilePath);
                             String b64 = FileConversions.fileToB64(fileFilePath); 
-                            String fileJson = jsonBuilder(username, fileReceiver, b64, "file", ext, filePolicy);
+                            String fileJson = jsonBuilder(username, fileReceiver, b64, "File", ext, filePolicy);
                             sendTo(fileReceiver, fileJson);
                         } catch (Exception e) {
                             System.out.println("[Phoebe]: "+ e.getMessage());
                         }
                         break;  
                         
-                    case "/help":
-                        System.out.println("Write listed commands and their features here.");
-                        System.out.println("/initalise - need to do this with a known user to initiate your tables");
-                        System.out.println("/connect [username] - connect to a known user");
-                        System.out.println("/update - updates all tables you are connected to, provided they accept");
-                        System.out.println("/message - send a message to a known user");
-                        System.out.println("/image - send an image to a known user");
-                        System.out.println("/file - send a file to a known user");
-                        System.out.println("/info - tells you your info");
-                        System.out.println("/clear - clears the screen for you.");
-                        System.out.println("/exit - close Phoebe");
-                        System.err.println("For more detailed information, do any command (except /exit) without all prematers");                       
-                        break;
-
-                    case "/info":
+                    case "/INFO":
                         System.out.println("Your ip is: " + localIp); 
                         System.out.println("Your port is: " + myPort);
                         break;
 
-                    case "/exit":
+                    case "/HELP":
+                        System.out.println("Below are all the commands you can use, alongside a small description of their uses.");
+                        System.out.println("/Initalise - need to do this with a known user to initiate your tables");
+                        System.out.println("/Connect - connect to a known user without JSON based security. Only use this feature if you wish to speak to multiple people in a potenitally non-secure way.");
+                        System.out.println("/Update - updates all tables you are connected to, provided they accept");
+                        System.out.println("/Message - send a message to a known user");
+                        System.out.println("/Image - send an image to a known user");
+                        System.out.println("/File - send a file to a known user");
+                        System.out.println("/Info - tells you your networking infomation (Ip & Port)");
+                        System.out.println("/Help - shows this list of commands");
+                        System.out.println("/Exit - close Phoebe");                    
+                        break;
+
+                    case "/EXIT":
                         System.out.println("Closing Phoebe");
                         System.exit(0);
                         break; 
@@ -248,7 +255,7 @@ public class Phoebe {
 // Checks target is real and ACTUALLY dm's only to them
     private static boolean sendTo(String targetName, String message){
         synchronized(peers){
-            System.out.println("[Testing]: Looking for " + targetName + "in list");  // remember to remove this .
+            System.out.println("[Testing]: Looking for " + targetName + " in list");  // remember to remove this .
             for (Peer peer:peers){
                 System.out.println("[Testing]: Found peer:" + peer.username + "");  // and this .
                 if (peer.username.equals(targetName)){
@@ -263,7 +270,7 @@ public class Phoebe {
             connectToPeer(peerInfo.ip, peerInfo.port);
             synchronized (peers) {
                 for (Peer peer : peers){
-                    System.out.println("[Testing]: " + peer.username + " " + peer.ip + ":" + peer.port); // remember to change from [Testing] .
+                    System.out.println("[Testing]: " + peer.username + " " + peer.ip + ":" + peer.port); // remember to change from [Testing] .  remove after ..
                 }
                 for (Peer peer : peers) {
                     if (peer.ip.equals(peerInfo.ip) && peer.port == peerInfo.port){
@@ -273,7 +280,6 @@ public class Phoebe {
                 }
             }       
         } catch (Exception e) {
-            System.out.println("[Phoebe]: " + e.getMessage());
         }
         System.out.println("[Phoebe]: User "+ targetName + " Not found");
         return false;
@@ -281,23 +287,22 @@ public class Phoebe {
 
 
     // -- Json Code below -- 
-// Edit this all its ass . For those not me reading, crow = message Oculus = logs of message
    public static String jsonBuilder(String senderUsername, String receiverUsername, String message, String typeOfData, String fileName, StickyPolicy policy){
         
-    JSONObject crow = new JSONObject()
-    .put("proginator", senderUsername)
-    .put("receiver", receiverUsername)
-    .put("message", message)
-    .put("fileName", fileName);
+    JSONObject Crow = new JSONObject()
+    .put("Proginator", senderUsername)
+    .put("Receiver", receiverUsername)
+    .put("Message", message)
+    .put("FileName", fileName);
 
     JSONObject Oculus = new JSONObject()
-    .put("timestamp", Instant.now().getEpochSecond())
-    .put("type", typeOfData)  
-    .put("policy", policy.toJSON());
+    .put("Timestamp", Instant.now().getEpochSecond())
+    .put("Type", typeOfData)  
+    .put("Policy", policy.toJSON());
 
     JSONObject Combined = new JSONObject()
-    .put("crow", crow)
-    .put("oculus", Oculus);
+    .put("Crow", Crow)
+    .put("Oculus", Oculus);
     return Combined.toString(); 
     }
    
@@ -485,40 +490,40 @@ public class Phoebe {
                 while ((message = in.readLine()) != null) {
                     try{
                     JSONObject json = new JSONObject(message);
-                    JSONObject oculus = json.getJSONObject("oculus");
-                    JSONObject crow = json.getJSONObject("crow");
+                    JSONObject Oculus = json.getJSONObject("Oculus");
+                    JSONObject Crow = json.getJSONObject("Crow");
 
-                    String typeOfData = oculus.getString("type");
-                    String sender = crow.getString("proginator");
-                    String receiver = crow.getString("receiver");
+                    String typeOfData = Oculus.getString("Type");
+                    String sender = Crow.getString("Proginator");
+                    String receiver = Crow.getString("Receiver");
                     if (!receiver.equals(username) && !receiver.equals("all")) {
                             continue;
                     }
                     switch (typeOfData) {   // < _ maybe change this variable name
-                        case "text":
-                            StickyPolicy policy = StickyPolicy.fromJSON(oculus.getJSONObject("policy"));
+                        case "Text":
+                            StickyPolicy policy = StickyPolicy.fromJSON(Oculus.getJSONObject("policy"));
                             PolicyEnforcer enforcer = new PolicyEnforcer(policy);
                             if (!enforcer.canRead())        break;
-                            System.out.println("[" + sender + "]: " + crow.getString("message"));
+                            System.out.println("[" + sender + "]: " + Crow.getString("message"));
                             break;
 
-                        case "image":
-                            StickyPolicy imgPolicy = StickyPolicy.fromJSON(oculus.getJSONObject("policy"));
+                        case "Image":
+                            StickyPolicy imgPolicy = StickyPolicy.fromJSON(Oculus.getJSONObject("policy"));
                             PolicyEnforcer imgEnforcer = new PolicyEnforcer(imgPolicy);
                             if (!imgEnforcer.canRead())     break; 
                             System.out.println("["+ sender +"]: " + "send an image");
-                            FileConversions.B64ToImage(sender,crow.getString("message"), crow.getString("fileName"));
+                            FileConversions.B64ToImage(sender,Crow.getString("message"), Crow.getString("fileName"));
                             break;
                             
-                        case "file":   // do same as ^ when this one is made
-                            StickyPolicy filePolicy = StickyPolicy.fromJSON(oculus.getJSONObject("policy"));
+                        case "File":   // do same as ^ when this one is made
+                            StickyPolicy filePolicy = StickyPolicy.fromJSON(Oculus.getJSONObject("policy"));
                             PolicyEnforcer fileEnforcer = new PolicyEnforcer(filePolicy);
                             if (!fileEnforcer.canRead())    break; 
                             System.out.println("["+ sender +"]: " + "send a file");
-                            FileConversions.B64ToFile(sender,crow.getString("message"),crow.getString("fileName"));
+                            FileConversions.B64ToFile(sender,Crow.getString("message"),Crow.getString("fileName"));
                             break;
 
-                        case "update_request":
+                        case "Update_Request":
                                 try {
                                     PendingRequest request = new PendingRequest(
                                         sender,
@@ -531,9 +536,9 @@ public class Phoebe {
                                     System.out.println("[Phoebe]: Failed to process Update Request.");
                                 }
                                 break;
-                        case "update_response":
+                        case "Update_Response":
                                 try {
-                                    DHT receivedDHT = DHT.fromJson(oculus.getJSONObject("dht"));
+                                    DHT receivedDHT = DHT.fromJson(Oculus.getJSONObject("dht"));
                                     dht.merge(receivedDHT);
                                     System.out.println("[Phoebe]: DHT table updated from" + sender);
                                 } catch (Exception e) {
@@ -545,7 +550,7 @@ public class Phoebe {
                             break;
                         
                         default:
-                            System.out.println("[" + sender + "]" + " sent an unknown message type: " + typeOfData);
+                            System.out.println("[Phoebe]: " + sender  + " sent an unknown message type: " + typeOfData);
                                 break;
                     }
                   } catch (Exception e) {// Not JSON or malformed, print raw as fallback

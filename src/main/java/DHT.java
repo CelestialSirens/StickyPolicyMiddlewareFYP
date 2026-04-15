@@ -79,15 +79,15 @@ public class DHT {
         }
         private JSONObject toJson() {
            return new JSONObject()
-           .put("ip", ip)
-           .put("port", port)
-           .put("timestamp", timestamp);
+           .put("IP", ip)
+           .put("Port", port)
+           .put("Timestamp", timestamp);
         }
         private static PeerInfo fromJSON(JSONObject json) {
             return new PeerInfo(
-                json.getString("ip"),
-                json.getInt("port"),
-                json.getLong("timestamp")
+                json.getString("IP"),
+                json.getInt("Port"),
+                json.getLong("Timestamp")
             );
         }
     }

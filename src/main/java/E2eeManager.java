@@ -53,11 +53,11 @@ public class E2eeManager {
         return attachedMsg;
     }
 
-    // decrypt function
+    // decrypt function - finishable after DHT is finished.. 
 
-    public String decrypt(byte[] encryptedData) throws Exception{
-        byte[] iv = new byte[12];
-    }
+    //public String decrypt(byte[] encryptedData) throws Exception{
+      //  byte[] iv = new byte[12];
+    //}
 
 
 }

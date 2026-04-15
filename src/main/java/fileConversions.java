@@ -43,7 +43,7 @@ public class FileConversions {
 
     public static void B64ToImage (String sender, String base64, String fileName) throws IOException{
         String dir = "Phoebe_recieved/" + sender;
-        new File(dir).mkdirs();
+        new File(dir).mkdirs();   // get rid of this with the window gui <000
         byte[] bytes = Base64.getDecoder().decode(base64);
         Files.write(Paths.get(dir + "/" + fileName),bytes);
         System.out.println("[FileConverter]: Image saved to " + dir + "/" + fileName);
@@ -58,7 +58,7 @@ public class FileConversions {
 
     public static void B64ToFile (String sender, String base64, String fileName) throws IOException{
         String dir = "Phoebe_recieved/" + sender;
-        new File(dir).mkdirs();
+        new File(dir).mkdirs();  // and this <000
         byte[] bytes = Base64.getDecoder().decode(base64);
         Files.write(Paths.get(dir + "/" + fileName), bytes);
         System.out.println("[FileConverter]: File saved to" + dir + "/" + fileName);
