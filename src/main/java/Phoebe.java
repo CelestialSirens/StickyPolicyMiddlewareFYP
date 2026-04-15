@@ -34,7 +34,7 @@ public class Phoebe {
         System.out.println("Please ensure you have merged your tables with another user before attempting to message them.");
         System.out.println("To connect to other users, type: /connect");  
         System.out.println("To message a specific user, use /message");
-        System.out.println("When you wish to send an image, use /send_image");
+        System.out.println("When you wish to send an image or file, use /image or /file");
         System.out.println("To send a message, just type it.");
         System.out.println("-------------------------------------------------");
 
@@ -97,7 +97,7 @@ public class Phoebe {
                             JSONObject updateRequest = new JSONObject()
                         .put("oculus", new JSONObject()
                             .put("type", "update_request")
-                            .put("timestampe", Instant.now().getEpochSecond()))
+                            .put("timestamp", Instant.now().getEpochSecond()))
                         .put("crow", new JSONObject()
                             .put("proginator", username)
                             .put( "receiver", peer.username));
@@ -158,13 +158,10 @@ public class Phoebe {
                         String isReadAllow = scanner.nextLine().trim();
                         boolean read = isReadAllow.isEmpty() || isReadAllow.equalsIgnoreCase("yes") || isReadAllow.equalsIgnoreCase("y");
                             if (!read) { System.out.println("([Phoebe]: Read isn't allowed, ending command.)"); break;}
-                        
-                        System.out.println("[Expiration Time] Expiry date/time ( DD/MM/YYYY HH:mm UTC, or leave empty for no expire)");   // <--- Maybe change this to have a check feature of what timezone they want./
+                        System.out.println("[Expiration Time] Expiry date/time ( DD/MM/YYYY HH:mm UTC, or leave empty for no expire)");   
                         String expiryInput = scanner.nextLine().trim();
-
                         StickyPolicy policy = new StickyPolicy.Builder().allowRead(read).expiryFromInput(expiryInput).build();
-
-                        sendTo(receiverUUID, jsonBuilder(username, receiverUUID, content, "text", "", policy));
+                            sendTo(receiverUUID, jsonBuilder(username, receiverUUID, content, "text", "", policy));
                     break;
 
                     case "/image": 
@@ -218,6 +215,7 @@ public class Phoebe {
                         System.out.println("Write listed commands and their features here.");
                         System.out.println("/initalise - need to do this with a known user to initiate your tables");
                         System.out.println("/connect [username] - connect to a known user");
+                        System.out.println("/update - updates all tables you are connected to, provided they accept");
                         System.out.println("/message - send a message to a known user");
                         System.out.println("/image - send an image to a known user");
                         System.out.println("/file - send a file to a known user");
@@ -238,7 +236,7 @@ public class Phoebe {
                         break; 
                default:
                    if (input.startsWith("/")){
-                       System.out.println("Command not recognised, type /help for listed commands. Please check all tables updated with /initalise");
+                       System.out.println("Command not recognised, type /help for listed commands");
                    } else{
                        broadcast("["+ username + "]:" + input);
                     }
@@ -250,9 +248,9 @@ public class Phoebe {
 // Checks target is real and ACTUALLY dm's only to them
     private static boolean sendTo(String targetName, String message){
         synchronized(peers){
-            System.out.println("[Testing]: Looking for " + targetName + "in list");
+            System.out.println("[Testing]: Looking for " + targetName + "in list");  // remember to remove this .
             for (Peer peer:peers){
-                System.out.println("[Testing]: Found peer:" + peer.username + "");
+                System.out.println("[Testing]: Found peer:" + peer.username + "");  // and this .
                 if (peer.username.equals(targetName)){
                     peer.out.println(message);
                     return true;
@@ -265,7 +263,7 @@ public class Phoebe {
             connectToPeer(peerInfo.ip, peerInfo.port);
             synchronized (peers) {
                 for (Peer peer : peers){
-                    System.out.println("[Testing]: " + peer.username + " " + peer.ip + ":" + peer.port);
+                    System.out.println("[Testing]: " + peer.username + " " + peer.ip + ":" + peer.port); // remember to change from [Testing] .
                 }
                 for (Peer peer : peers) {
                     if (peer.ip.equals(peerInfo.ip) && peer.port == peerInfo.port){
@@ -294,7 +292,7 @@ public class Phoebe {
 
     JSONObject Oculus = new JSONObject()
     .put("timestamp", Instant.now().getEpochSecond())
-    .put("type", typeOfData)  // type of message like normal msg or image
+    .put("type", typeOfData)  
     .put("policy", policy.toJSON());
 
     JSONObject Combined = new JSONObject()
@@ -302,9 +300,8 @@ public class Phoebe {
     .put("oculus", Oculus);
     return Combined.toString(); 
     }
-    // Conversion code moved to other class. 
-
-    // Client thread connect-other
+   
+    // Client thread not server . 
     private static void connectToPeer(String ip, int port) {
         synchronized (peers) {
             for (Peer peer :peers){
@@ -372,7 +369,7 @@ public class Phoebe {
             }
         }
     }
-    // BACKGROUND TASK: Listening for clients
+    
     private static class ServerTask implements Runnable {
         private final int port;
 
@@ -396,12 +393,11 @@ public class Phoebe {
             }
         }
     }
-    // BACKGROUND TASK: Listening to dm client  -- need to make test on this ::::::::::::
-
     
     // this needs HEAVY editing, its the biggest connection .... 12/04/26 -> This really should have been its own file, can i even actually do that now? Is it too big to *actually* move???
     // i think this is honestly the worst class ive ever written. I'm reading through it and genuinely crying at how messy it is and how it feels so unoptimised
     // not even just the class, this whole project i hate . It cant do what i wanted it to do i didnt understand 
+    
     private static class PeerHandler implements Runnable {
         private Socket socket; 
         private BufferedReader in;
@@ -604,8 +600,7 @@ public class Phoebe {
             }
             return true;
         }
-        // public boolean canForward(){
-        //   if ()}
+        
 }
 public static class PendingRequest {
         public final String requesterUsername;
