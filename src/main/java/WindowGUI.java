@@ -3,3 +3,8 @@
 
 
 // After E2ee is actually finished ^^^
+
+
+public class WindowGUI{
+
+}

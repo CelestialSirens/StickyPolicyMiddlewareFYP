@@ -1,8 +1,18 @@
 
-import java.io.*;
-import java.net.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
+
 import org.json.JSONObject;
 public class Phoebe {   
 
@@ -20,8 +30,8 @@ public class Phoebe {
         System.out.print("Enter your username: ");
         username = scanner.nextLine();
         System.out.print("Enter the port you want to listen on (any open port between 1 - 50,000): ");
-        int myPort = Integer.parseInt(scanner.nextLine());
-        String localIp = InetAddress.getLocalHost().getHostAddress();
+        myPort = Integer.parseInt(scanner.nextLine());
+        localIp = InetAddress.getLocalHost().getHostAddress();
         new Thread(new ServerTask(myPort)).start();
         try {
             dht.register(username, localIp, myPort);
@@ -125,10 +135,10 @@ public class Phoebe {
                             .put("Oculus", new JSONObject()
                                 .put("Type", "update_response")
                                 .put("Timestamp", Instant.now().getEpochSecond())
-                                .put("DHT", dht.toJson())
-                            .put("Crow", new JSONObject())
+                                .put("DHT", dht.toJson()))
+                            .put("Crow", new JSONObject()
                                 .put("Proginator", username)
-                                .put("Receiever", request.requesterUsername));   
+                                .put("Receiver", request.requesterUsername));   
                         request.requesterOut.println(response.toString());
                     System.out.println("[Phoebe]: Table shared with " + request.requesterUsername);
                     } else {
@@ -138,7 +148,7 @@ public class Phoebe {
                             .put("Timestamp", Instant.now().getEpochSecond()))
                         .put("Crow", new JSONObject()
                             .put("Proginator", username)
-                            .put("Receiever", request.requesterUsername));    
+                            .put("Receiver", request.requesterUsername));    
                         request.requesterOut.println(denied.toString());
                         System.out.println("[Phoebe]: Request from " + request.requesterUsername + "denied");
                         }
@@ -154,7 +164,7 @@ public class Phoebe {
                         System.out.print("[Message-Command]Message to send:");
                         String content = scanner.nextLine().trim();
                         System.out.println("[Message-Command]Set Policy requirements");
-                        System.out.println("[Message-Command]Allow user to read? (yes or no):");  // if no just ends the process
+                        System.out.println("[Message-Command]Allow user to read? (yes or no):");  
                         String isReadAllow = scanner.nextLine().trim();
                         boolean read = isReadAllow.isEmpty() || isReadAllow.equalsIgnoreCase("yes") 
                         || isReadAllow.equalsIgnoreCase("y");
@@ -243,7 +253,7 @@ public class Phoebe {
                         break; 
                default:
                    if (input.startsWith("/")){
-                       System.out.println("Command not recognised, type /help for listed commands");
+                       System.out.println("Command not recognised, type /Help for listed commands");
                    } else{
                        broadcast("["+ username + "]:" + input);
                     }
@@ -330,9 +340,9 @@ public class Phoebe {
                 try {
                     DHT peerDHT = DHT.fromJson(new JSONObject(peerDHTJson));
                     dht.merge(peerDHT);
-                System.out.println("[Testing]: Tables merged - Line 305");
+                System.out.println("[Testing]: Tables merged - Line 305");  // remove testing & line mention 
             } catch (Exception e){
-                System.out.println("[Testing]: Tables failed to merge - 307");
+                System.out.println("[Testing]: Tables failed to merge - 307"); // ditto to above x2
             }
         }
             String ready = input.readLine();
@@ -387,7 +397,6 @@ public class Phoebe {
             try (ServerSocket serverSocket = new ServerSocket(port)) {
                 while (true) {
                     Socket socket = serverSocket.accept();
-                    // When someone connects, set up the streams
                     PrintWriter out = new PrintWriter(socket.getOutputStream(),true);
                     BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                     setupStreams(socket,out, in, false, null,0);
@@ -486,7 +495,7 @@ public class Phoebe {
             } catch (Exception e){
                 System.out.println("[Phoebe]: Could not resolve username");
             }
-                String message;
+                    String message;
                 while ((message = in.readLine()) != null) {
                     try{
                     JSONObject json = new JSONObject(message);
