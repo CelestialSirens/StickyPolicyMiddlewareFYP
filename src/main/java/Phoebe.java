@@ -109,7 +109,7 @@ public class Phoebe {
                             .put("Type", "update_request")
                             .put("Timestamp", Instant.now().getEpochSecond()))
                         .put("Crow", new JSONObject()
-                            .put("Proginator", username)
+                            .put("Progenitor", username)
                             .put( "Receiver", peer.username));
                         peer.out.println(updateRequest.toString());
                         }
@@ -137,7 +137,7 @@ public class Phoebe {
                                 .put("Timestamp", Instant.now().getEpochSecond())
                                 .put("DHT", dht.toJson()))
                             .put("Crow", new JSONObject()
-                                .put("Proginator", username)
+                                .put("Progenitor", username)
                                 .put("Receiver", request.requesterUsername));   
                         request.requesterOut.println(response.toString());
                     System.out.println("[Phoebe]: Table shared with " + request.requesterUsername);
@@ -147,7 +147,7 @@ public class Phoebe {
                             .put("Type", "update_denied")
                             .put("Timestamp", Instant.now().getEpochSecond()))
                         .put("Crow", new JSONObject()
-                            .put("Proginator", username)
+                            .put("Progenitor", username)
                             .put("Receiver", request.requesterUsername));    
                         request.requesterOut.println(denied.toString());
                         System.out.println("[Phoebe]: Request from " + request.requesterUsername + "denied");
@@ -302,7 +302,7 @@ public class Phoebe {
    public static String jsonBuilder(String senderUsername, String receiverUsername, String message, String typeOfData, String fileName, StickyPolicy policy){
         
     JSONObject Crow = new JSONObject()
-    .put("Proginator", senderUsername)
+    .put("Progenitor", senderUsername)
     .put("Receiver", receiverUsername)
     .put("Message", message)
     .put("FileName", fileName);
@@ -505,33 +505,33 @@ public class Phoebe {
                     JSONObject Crow = json.getJSONObject("Crow");
 
                     String typeOfData = Oculus.getString("Type");
-                    String sender = Crow.getString("Proginator");
+                    String sender = Crow.getString("Progenitor");
                     String receiver = Crow.getString("Receiver");
                     if (!receiver.equals(username) && !receiver.equals("all")) {
                             continue;
                     }
                     switch (typeOfData) {   // < _ maybe change this variable name
                         case "Text":
-                            StickyPolicy policy = StickyPolicy.fromJSON(Oculus.getJSONObject("policy"));
+                            StickyPolicy policy = StickyPolicy.fromJSON(Oculus.getJSONObject("Policy"));
                             PolicyEnforcer enforcer = new PolicyEnforcer(policy);
                             if (!enforcer.canRead())        break;
-                            System.out.println("[" + sender + "]: " + Crow.getString("message"));
+                            System.out.println("[" + sender + "]: " + "This is a DM only you can see, it expires at :" + Crow.getString("Message"));
                             break;
 
                         case "Image":
-                            StickyPolicy imgPolicy = StickyPolicy.fromJSON(Oculus.getJSONObject("policy"));
+                            StickyPolicy imgPolicy = StickyPolicy.fromJSON(Oculus.getJSONObject("Policy"));
                             PolicyEnforcer imgEnforcer = new PolicyEnforcer(imgPolicy);
                             if (!imgEnforcer.canRead())     break; 
-                            System.out.println("["+ sender +"]: " + "send an image");
-                            FileConversions.B64ToImage(sender,Crow.getString("message"), Crow.getString("fileName"));
+                            System.out.println("["+ sender +"]: " + "sent an image only you can see, it expires at : "); // add the Expiry variable after
+                            FileConversions.B64ToImage(sender,Crow.getString("Message"), Crow.getString("FileName"));
                             break;
                             
                         case "File":   // do same as ^ when this one is made
-                            StickyPolicy filePolicy = StickyPolicy.fromJSON(Oculus.getJSONObject("policy"));
+                            StickyPolicy filePolicy = StickyPolicy.fromJSON(Oculus.getJSONObject("Policy"));
                             PolicyEnforcer fileEnforcer = new PolicyEnforcer(filePolicy);
                             if (!fileEnforcer.canRead())    break; 
-                            System.out.println("["+ sender +"]: " + "send a file");
-                            FileConversions.B64ToFile(sender,Crow.getString("message"),Crow.getString("fileName"));
+                            System.out.println("["+ sender +"]: " + "sent a file only you can see, it expires at :"); // add the Expiry variable after
+                            FileConversions.B64ToFile(sender,Crow.getString("Message"),Crow.getString("FileName"));
                             break;
 
                         case "Update_Request":
@@ -549,7 +549,7 @@ public class Phoebe {
                                 break;
                         case "Update_Response":
                                 try {
-                                    DHT receivedDHT = DHT.fromJson(Oculus.getJSONObject("dht"));
+                                    DHT receivedDHT = DHT.fromJson(Oculus.getJSONObject("DHT"));
                                     dht.merge(receivedDHT);
                                     System.out.println("[Phoebe]: DHT table updated from" + sender);
                                 } catch (Exception e) {
