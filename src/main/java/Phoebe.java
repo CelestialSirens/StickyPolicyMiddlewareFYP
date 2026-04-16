@@ -232,6 +232,8 @@ public class Phoebe {
                     case "/INFO":
                         System.out.println("Your ip is: " + localIp); 
                         System.out.println("Your port is: " + myPort);
+                        String tableContents = String.join(",", dht.getTable().keySet()); 
+                        System.out.println("Your current table Usernames are:" + tableContents);
                         break;
 
                     case "/HELP":
