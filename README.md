@@ -3,7 +3,13 @@
 Phoebe is a p2p console based chat application using a sticky policy privacy method to attempt user privacy.
 The goal of Phoebe is to create a Java based multi user P2P chat app, that allows users to send messages and images without fear of privacy infringments.
 
-  By using a JSON based sticky policy, any message sent in DMs follows a strict logging method showing: who has opened the message, if it has been edited/when, 
+  By using a JSON based sticky policy system, any form of communication sent with specific commands, has an attached policy JSON which allows the sender to specify :
+   <ul>  
+     <li> If a message can be read by a User </li>
+      <li> How long until a message expires - In UTC time</li>
+       <li> If a message is a File or Image, if it can be downloaded by a User </li>
+   </ul> 
+Regardless of if it is communication from commands or simply users conversing with each other, all messages follow a strict Curve25519 algorithm based E2ee Structure, as inspired by the Signal and Session messaging applications.  
 
 # Motive : 
   
@@ -37,10 +43,12 @@ Meta data found attatched to the data sent is then processed once a user recieve
 
 
 # Features
-  - Allows for either group based or 1 - 1 file transfer
+  - Phoebe hosts a variety of commands that allow Users to specify what style of message or action they desire.
+  - A simplified Distributed Hash table which allows users to merge tables with each other and update them to have additional users present.
+  - A / 
 
 ## In development features
-  - GUI
+  
   - DHT based communication , either based on tomp2p or a simple handmade version .
   - Robust selection of file types to be transfered including  PNG, PDF, JPEG, [ADD OTHERS WHEN DONE]
 
