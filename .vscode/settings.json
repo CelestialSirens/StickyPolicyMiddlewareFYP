@@ -6,5 +6,6 @@
     ],
     "java.configuration.updateBuildConfiguration": "interactive",
     "chat.agent.enabled": true,
-    "java.debug.settings.onBuildFailureProceed": true
+    "java.debug.settings.onBuildFailureProceed": true,
+    "chat.extensionUnification.enabled": false
 }
