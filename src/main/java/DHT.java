@@ -1,7 +1,7 @@
-import org.json.JSONObject;
-import org.json.JSONArray;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.json.JSONObject;
 
     // file to contain all the DHT routing, got too messy in main
 public class DHT {
@@ -10,21 +10,34 @@ public class DHT {
     private long Time() throws Exception{
         return StickyPolicy.TimeCheck.UTCTime();
     }
-
+    private String lastRegisteredName;
     public void register(String username, String ip, int port) throws Exception{
         if (table.containsKey(username)){
             PeerInfo exists = table.get(username);
-            if (exists.ip.equals(ip)){
+            if (exists.ip.equals(ip) && exists.port == port){
                 table.put(username, new PeerInfo(ip,port, StickyPolicy.TimeCheck.UTCTime()));
-                System.out.println("[Phoebe]: Updated entry for " + username);
-            } else {
-                throw new Exception("[Phoebe]: Username " + username + "is already taken");
+                System.out.println("[Phoebe]: Updated entry for " + username);   
+                lastRegisteredName = username; 
+                return;
             }   
-        } else {
-            table.put(username, new PeerInfo(ip,port, StickyPolicy.TimeCheck.UTCTime()));
-            System.out.println("[Phoebe]: Registed " + username);
         }
-    }
+            String finalName = username;
+            if (table.containsKey(username)){
+                int counter = 1;
+                while (table.containsKey(username + "#" + counter));{
+                counter++;
+                }
+            finalName = username + "#" + counter;
+            System.out.println("[Phoebe]: Username taken, registed as" + finalName);         
+            }
+            table.put(finalName, new PeerInfo(ip, port, StickyPolicy.TimeCheck.UTCTime()));
+            lastRegisteredName = finalName;
+            System.out.println("[Phoebe]: Registered, " + finalName);
+        }
+        public String getLastRegisteredName(){
+            return lastRegisteredName;
+        }
+
     public PeerInfo lookup(String username) throws Exception{
         if (!table.containsKey(username)){
             throw new Exception("[Phoebe]: No username found " + username);

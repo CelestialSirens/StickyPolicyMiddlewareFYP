@@ -1,4 +1,3 @@
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -36,6 +35,7 @@ public class Phoebe {
         new Thread(new ServerTask(myPort)).start();
         try {
             dht.register(username, localIp, myPort);
+            username = dht.getLastRegisteredName();
             System.out.println("[Phoebe]: Registed as " + username + " at " + localIp + "  : " + myPort);
             } catch (Exception e) {
             System.out.println("[Phoebe-Error]: " + e.getMessage());
@@ -168,12 +168,12 @@ public class Phoebe {
                     break;
 
                 case "/MESSAGE":
-                        System.out.print("[Message-Command]Send to:");
+                        System.out.print("[Message-Command]Send to: ");
                         String receiverUUID = scanner.nextLine().trim();
-                        System.out.print("[Message-Command]Message to send:");
+                        System.out.print("[Message-Command]Message to send: ");
                         String content = scanner.nextLine().trim();
-                        System.out.println("[Message-Command]Set Policy requirements");
-                        System.out.println("[Message-Command]Allow user to read? (yes or no):");  
+                        System.out.println("[Message-Command]Set Policy requirements; ");
+                        System.out.println("[Message-Command]Allow user to read? (yes or no): ");  
                         String isReadAllow = scanner.nextLine().trim();
                         boolean read = isReadAllow.isEmpty() || isReadAllow.equalsIgnoreCase("yes") 
                         || isReadAllow.equalsIgnoreCase("y");
@@ -189,6 +189,8 @@ public class Phoebe {
                                 System.out.println("[Phoebe]: No messages currently avaliable");
                                 break;
                             }       
+                        List<UserInbox> toRemove = new ArrayList<>();   
+                        for (UserInbox entry : messageInbox){} 
                         UserInbox messageEntry = messageInbox.get(0);
                         System.out.println("[Phoebe]: Direct message from :" + messageEntry.sender); 
                             if (messageEntry.policy.isExpired()){
@@ -303,7 +305,7 @@ public class Phoebe {
         synchronized(peers){
             System.out.println("[Testing]: Looking for " + targetName + " in list");  // remember to remove this .
             for (Peer peer:peers){
-                System.out.println("[Testing]: Found peer:" + peer.username + "");  // and this .
+                System.out.println("[Testing]: Found peer: " + peer.username + "");  // and this .
                 if (peer.username.equals(targetName)){
                     peer.out.println(message);
                     return true;
@@ -376,9 +378,9 @@ public class Phoebe {
                 try {
                     DHT peerDHT = DHT.fromJson(new JSONObject(peerDHTJson));
                     dht.merge(peerDHT);
-                System.out.println("[Testing]: Tables merged - Line 305");  // remove testing & line mention 
+                System.out.println("[Testing]: Tables merged - Line 380");  // remove testing & line mention 
             } catch (Exception e){
-                System.out.println("[Testing]: Tables failed to merge - 307"); // ditto to above x2
+                System.out.println("[Testing]: Tables failed to merge - 382"); // ditto to above x2
             }
         }
             String ready = input.readLine();
@@ -494,12 +496,13 @@ public class Phoebe {
                 } catch (Exception e) {
                     System.out.println("[Peer handler]:"+ e.getMessage());
                 }
+                String resolvedName = dht.getLastRegisteredName(); 
                 synchronized(peers){
                     for(Peer peer : peers){
                         if (peer.out == out) {
                             peers.remove(peer);
                             peers.add(new Peer( 
-                                senderUsername, 
+                                resolvedName, 
                                 socket.getInetAddress().getHostAddress(),
                                 d1ListenPort,
                                 out));
@@ -507,7 +510,7 @@ public class Phoebe {
                         }
                     }
                 }
-                System.out.println("[Phoebe]: " + senderUsername + " " + "has connected.");
+                System.out.println("[Phoebe]: " + resolvedName + " " + "has connected.");
                 } else 
                 try{
                     String nonDefaultName = "defaultName";
@@ -517,7 +520,9 @@ public class Phoebe {
                         break;
                     }
                 }
-                final String realUsername = nonDefaultName;
+
+                dht.register(nonDefaultName, socket.getInetAddress().getHostAddress(), peerListenPort);
+                final String realUsername = dht.getLastRegisteredName();
                 synchronized (peers) {
                     for (Peer peer : peers){
                         if (peer.out == out){
@@ -551,14 +556,15 @@ public class Phoebe {
                             PolicyEnforcer enforcer = new PolicyEnforcer(policy);
                             if (!enforcer.canRead())        break;
                             String textContent = Crow.getString("Message");
-                            messageInbox.add(new UserInbox(sender,textContent,policy));
-                            System.out.println("[Phoebe]:" + sender + "Has sent a message to you, do /Inbox to view.");
+                            messageInbox.add(new UserInbox(sender,textContent,policy));   // this needs those types added to it
+                            System.out.println("[Phoebe]: " + sender + " Has sent a message to you, do /Inbox to view.");
                             break;
 
                         case "Image":
                             StickyPolicy imgPolicy = StickyPolicy.fromJSON(Oculus.getJSONObject("Policy"));
                             PolicyEnforcer imgEnforcer = new PolicyEnforcer(imgPolicy);
                             if (!imgEnforcer.canRead())     break; 
+                            //String imgContent = Crow.getString("Message"), Crow.getString("FileName");
                             System.out.println("["+ sender +"]: " + "sent an image only you can see, it expires at : "); // add the Expiry variable after
                             FileConversions.B64ToImage(sender,Crow.getString("Message"), Crow.getString("FileName"));
                             break;
@@ -628,12 +634,14 @@ public class Phoebe {
         public final String ip;
         public final int port;
         public final PrintWriter out;
+      //  public final E2eeManager e2ee;
 
-        public Peer(String username, String ip, int port, PrintWriter out){
+        public Peer(String username, String ip, int port, PrintWriter out){ //E2eeManager e2ee){    < -- add this back in after, 
             this.username =username;
             this.ip = ip;
             this.port = port;
             this.out = out;
+           // this.e2ee = e2ee;
         } 
     }
     public static class PolicyEnforcer {
@@ -669,11 +677,15 @@ public class Phoebe {
     public static class UserInbox{
         public final String sender;
         public final String content;
+       // public final String type;     <- for inbox command eventually
+       // public final String fileName;  <- ditto ^ 
         public final StickyPolicy policy;
 
-        public UserInbox(String sender, String content, StickyPolicy policy){
+        public UserInbox(String sender, String content, StickyPolicy policy){ //String type, String fileName
             this.sender = sender;
             this.content = content;
+          //  this.type = type;
+           // this.fileName = fileName;
             this.policy = policy;
         }
     }
