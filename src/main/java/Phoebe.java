@@ -22,7 +22,7 @@ public class Phoebe {
 
         private static String username;
         private static int myPort;
-        private static String IP;
+        //private static String IP;   < -- Last config change with the other stuff
         private static String localIp;
 
     public static void main(String[] args) throws IOException {
@@ -205,7 +205,7 @@ public class Phoebe {
                         List<UserInbox> toRemove = new ArrayList<>();   
                         for (UserInbox entry : messageInbox){} 
                         UserInbox messageEntry = messageInbox.get(0);
-                        System.out.println("[Phoebe]: Direct message from : " + messageEntry.sender); 
+                        System.out.println("[Phoebe]: Direct message from : " + messageEntry.sender + "Expires at :"); // add variable for time transformation here ); 
                             if (messageEntry.policy.isExpired()){
                                 System.out.println("[Testing]: Message permissions have Expired");
                                 System.out.println("[Testing]: Content - No longer viewable");
@@ -239,6 +239,10 @@ public class Phoebe {
                         System.out.println("[Expiration Time] Expiry date/time ( DD/MM/YYYY HH:mm UTC, or leave empty for no expire)");
                         String imgExpiry = scanner.nextLine().trim();
                         StickyPolicy imgPolicy = new StickyPolicy.Builder().allowRead(imgRead).allowDownload(imgDownload).expiryFromInput(imgExpiry).build();
+                        //if (imgPolicy.hasFailed()){
+                          //  System.out.println("");
+                            //break;
+                        //}
                         try {
                             String ext = FileConversions.getExtension(imgPath);
                             String b64 = FileConversions.imageToB64(imgPath);
@@ -464,9 +468,9 @@ public class Phoebe {
     // not even just the class, this whole project i hate . It cant do what i wanted it to do i didnt understand 
     
     private static class PeerHandler implements Runnable {
-        private Socket socket; 
-        private BufferedReader in;
-        private PrintWriter out;
+        private final Socket socket; 
+        private final BufferedReader in;
+        private final PrintWriter out;
         private final boolean handShakeDone;
         private final int peerListenPort;
 
@@ -577,9 +581,10 @@ public class Phoebe {
 
                         case "Image":
                             StickyPolicy imgPolicy = StickyPolicy.fromJSON(Oculus.getJSONObject("Policy"));
-                            PolicyEnforcer imgEnforcer = new PolicyEnforcer(imgPolicy);
-                            if (!imgEnforcer.canRead())     break; 
-                            //String imgContent = Crow.getString("Message"), Crow.getString("FileName");
+                                if (imgPolicy.isExpired()){
+                                    System.out.println("[Phoebe]: Recieved an expired Image from" + sender + " It will not be downloaded.");
+                                }
+                            //String imgContent = Crow.get("Message");
                             System.out.println("["+ sender +"]: " + "sent an image only you can see, it expires at : "); // add the Expiry variable after
                             FileConversions.B64ToImage(sender,Crow.getString("Message"), Crow.getString("FileName"));
                             break;
