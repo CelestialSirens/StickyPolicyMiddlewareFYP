@@ -24,10 +24,11 @@ public class StickyPolicy {
         }
         public boolean canRead() {return allowRead;}
         public boolean isExpired() {
-            if (expiryEpoch == 0) return false;
+            System.out.println("[Testing]: Checking expiry, value is " + this.expiryEpoch);
+            if (this.expiryEpoch == 0) {return false;}
             try {
                 long now = TimeCheck.UTCTime();
-                return now > expiryEpoch;
+                return now > this.expiryEpoch;
             } catch(Exception e){
                  System.out.println("[Phoebe]: Could not reach expiry time server, will not send file. Try again later ensure BOTH users are connected to the internet.");
                  return true;
@@ -42,16 +43,17 @@ public class StickyPolicy {
 
         public static StickyPolicy fromJSON(JSONObject json) {
             return new Builder()
-            .allowRead(json.getBoolean("allowRead"))
-            .expiryEpoch(json.getLong("expiryEpoch"))
-            .allowDownload(json.getBoolean("allowDownload"))
+            .allowRead(json.optBoolean("allowRead",true))
+            .expiryEpoch(json.optLong("expiryEpoch", 0))
+            .allowDownload(json.optBoolean("allowDownload",true))
             .build();
         }
 
         public static class Builder {
-            private boolean allowRead =true;
-            private long expiryEpoch =0;
-            private boolean allowDownload =true;
+            private boolean allowRead = true;
+            private long expiryEpoch = 0;
+            private boolean allowDownload = true;
+            private boolean parseFailed = false;
 
             public Builder allowRead(boolean v){
                 this.allowRead = v;
@@ -65,16 +67,27 @@ public class StickyPolicy {
                 this.allowDownload =v;
                 return this;
             }
+            public boolean hasFailed(){ return parseFailed;}
             public Builder expiryFromInput(String input){
                 if (input == null || input.trim().isEmpty()){
                     this.expiryEpoch = 0;
                     return this;
                 }
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("DD/MM/YYYY HH:mm");
-                LocalDateTime dateTime = LocalDateTime.parse(input.trim(), formatter);
-                this.expiryEpoch = dateTime.toEpochSecond(ZoneOffset.UTC);
+                try{
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+                         LocalDateTime dateTime = LocalDateTime.parse(input.trim(), formatter);
+                         this.expiryEpoch = dateTime.toInstant(ZoneOffset.UTC).getEpochSecond();
+                         long currentUTC = TimeCheck.UTCTime();
+                         if (this.expiryEpoch <= currentUTC ){
+                            System.out.println("[Phoebe]: Invalid time given.");
+                            this.parseFailed = true;
+                         }
+                } catch (Exception e) {
+                    this.parseFailed = true;
+                }
                 return this;
             }
+
             public StickyPolicy build() {
                 return new StickyPolicy(this);
             }
@@ -91,10 +104,8 @@ public class TimeCheck {
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         JSONObject json = new JSONObject(response.body());
         
-        String dateTime = json.getString("dateTime");
-        String trimmed = dateTime.substring(0,19);
-        LocalDateTime LDT = LocalDateTime.parse(trimmed);
-        return LDT.toEpochSecond(ZoneOffset.UTC);
+        String dateTimeString = json.getString("dateTime");
+        return java.time.LocalDateTime.parse(dateTimeString).toInstant(java.time.ZoneOffset.UTC).getEpochSecond();
 
     }
 
@@ -110,7 +121,7 @@ public class Watermark {
             for (byte b : hash) {
                 hex.append(String.format("%02XX", b));
             }
-            return hex.substring(0,0);
+            return hex.substring(0,8);
         } catch (Exception e){
             return "000000000";
         }

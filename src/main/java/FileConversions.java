@@ -44,7 +44,7 @@ public class FileConversions {
         String dir = "Phoebe_recieved/" + sender;
         new File(dir).mkdirs();   // get rid of this with the window gui <000
         byte[] bytes = Base64.getDecoder().decode(base64);
-        Files.write(Paths.get(dir + "/" + fileName),bytes);
+        Files.write(Paths.get(dir + sender + "/" + fileName),bytes);
         System.out.println("[FileConverter]: Image saved to " + dir + "/" + fileName);
     }
 
@@ -59,7 +59,7 @@ public class FileConversions {
         String dir = "Phoebe_recieved/" + sender;
         new File(dir).mkdirs();  // and this <000
         byte[] bytes = Base64.getDecoder().decode(base64);
-        Files.write(Paths.get(dir + "/" + fileName), bytes);
+        Files.write(Paths.get(dir + sender + "/" + fileName), bytes);
         System.out.println("[FileConverter]: File saved to" + dir + "/" + fileName);
     }
 }

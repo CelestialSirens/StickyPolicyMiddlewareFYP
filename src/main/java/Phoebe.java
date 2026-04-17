@@ -22,16 +22,24 @@ public class Phoebe {
 
         private static String username;
         private static int myPort;
+        private static String IP;
         private static String localIp;
 
     public static void main(String[] args) throws IOException {
         Scanner scanner = new Scanner(System.in);
         System.out.println("--- Welcome to Phoebe ---");
         System.out.print("Enter your username: ");
-        username = scanner.nextLine();
+        username = scanner.nextLine().trim();
+      //  System.out.println("If using only in Intranet please type yes, otherwise Phoebe will use Public IP");
+       // IP = scanner.nextLine().trim();
+       // if (IP.equalsIgnoreCase("yes")) {
+         //   Object obj = (Object)scanner.nextLine();
+            
+      //  }  ^^ Only once actually finished try this since its technically just a config change 
         System.out.print("Enter the port you want to listen on (any open port between 1 - 50,000): ");
         myPort = Integer.parseInt(scanner.nextLine());
         localIp = InetAddress.getLocalHost().getHostAddress();
+      //  IP = getPublicIP();
         new Thread(new ServerTask(myPort)).start();
         try {
             dht.register(username, localIp, myPort);
@@ -180,8 +188,13 @@ public class Phoebe {
                             if (!read) { System.out.println("([Phoebe]: Read isn't allowed, ending command.)"); break;}
                         System.out.println("[Expiration Time] Expiry date/time ( DD/MM/YYYY HH:mm UTC, or leave empty for no expire)");   
                         String expiryInput = scanner.nextLine().trim();
-                        StickyPolicy policy = new StickyPolicy.Builder().allowRead(read).expiryFromInput(expiryInput).build();
-                            sendTo(receiverUUID, jsonBuilder(username, receiverUUID, content, "Text", "", policy));
+                        StickyPolicy.Builder builder = new StickyPolicy.Builder().allowRead(read).expiryFromInput(expiryInput);
+                        if (builder.hasFailed()){
+                            System.out.println("[Phoebe]: Invalid time given, message is not being sent please try again with a valid time.");
+                            break;
+                        }
+                        StickyPolicy policy = builder.build();
+                        sendTo(receiverUUID, jsonBuilder(username, receiverUUID, content, "Text", "", policy));
                     break;
                 case "/INBOX":
                         synchronized (messageInbox) {
@@ -192,7 +205,7 @@ public class Phoebe {
                         List<UserInbox> toRemove = new ArrayList<>();   
                         for (UserInbox entry : messageInbox){} 
                         UserInbox messageEntry = messageInbox.get(0);
-                        System.out.println("[Phoebe]: Direct message from :" + messageEntry.sender); 
+                        System.out.println("[Phoebe]: Direct message from : " + messageEntry.sender); 
                             if (messageEntry.policy.isExpired()){
                                 System.out.println("[Testing]: Message permissions have Expired");
                                 System.out.println("[Testing]: Content - No longer viewable");
@@ -552,11 +565,13 @@ public class Phoebe {
                     switch (typeOfData) {   // < _ maybe change this variable name
                        
                         case "Text":
-                            StickyPolicy policy = StickyPolicy.fromJSON(Oculus.getJSONObject("Policy"));
-                            PolicyEnforcer enforcer = new PolicyEnforcer(policy);
-                            if (!enforcer.canRead())        break;
+                            StickyPolicy incomingPolicy = StickyPolicy.fromJSON(Oculus.getJSONObject("Policy"));
+                                if (incomingPolicy.isExpired()){
+                                    System.out.println("[Phoebe]: Recieved an expired message from " + sender);
+                                    break;
+                                }      
                             String textContent = Crow.getString("Message");
-                            messageInbox.add(new UserInbox(sender,textContent,policy));   // this needs those types added to it
+                            messageInbox.add(new UserInbox(sender,textContent,incomingPolicy));   // this needs those types added to it
                             System.out.println("[Phoebe]: " + sender + " Has sent a message to you, do /Inbox to view.");
                             break;
 
@@ -689,4 +704,11 @@ public class Phoebe {
             this.policy = policy;
         }
     }
-}
+   // public static String getPublicIP(){
+      //  try {
+//return 
+     //   } catch (Exception e) {
+     //       return null;
+  //      }
+    }
+
