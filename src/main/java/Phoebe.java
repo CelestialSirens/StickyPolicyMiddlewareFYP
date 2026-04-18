@@ -186,6 +186,7 @@ public class Phoebe {
                         boolean read = isReadAllow.isEmpty() || isReadAllow.equalsIgnoreCase("yes") 
                         || isReadAllow.equalsIgnoreCase("y");
                             if (!read) { System.out.println("([Phoebe]: Read isn't allowed, ending command.)"); break;}
+                        System.out.println("[Phoebe]: Reminder!! Currently UTC is BST- 1");
                         System.out.println("[Expiration Time] Expiry date/time ( DD/MM/YYYY HH:mm UTC, or leave empty for no expire)");   
                         String expiryInput = scanner.nextLine().trim();
                         StickyPolicy.Builder builder = new StickyPolicy.Builder().allowRead(read).expiryFromInput(expiryInput);
@@ -205,14 +206,37 @@ public class Phoebe {
                         List<UserInbox> toRemove = new ArrayList<>();   
                         for (UserInbox entry : messageInbox){} 
                         UserInbox messageEntry = messageInbox.get(0);
-                        System.out.println("[Phoebe]: Direct message from : " + messageEntry.sender + "Expires at :"); // add variable for time transformation here ); 
+                        System.out.println("[Phoebe]: You have been sent a :" + messageEntry.type + " from " + messageEntry.sender); // add variable for time transformation here ); 
+
                             if (messageEntry.policy.isExpired()){
-                                System.out.println("[Testing]: Message permissions have Expired");
                                 System.out.println("[Testing]: Content - No longer viewable");
+                                messageInbox.remove(0);
                                 break;
                             } 
-                        System.out.println("Content: " + messageEntry.content);
-                        System.out.println("[Phoebe]: If you wish to reply do /Message once off this menu" );
+                            switch (messageEntry.type) {
+                                case "Text":
+                                        System.out.println("Content: " + messageEntry.content);
+                                    break;
+
+                                case "Image":
+                                        System.out.println("[Phoebe]: Image recieved - " + messageEntry.fileName);
+                                        System.out.println("[Phoebe]: Type 'View' to open it, or anything else to skip");
+                                        String imgChoice = scanner.nextLine().trim();
+
+                                    break;
+
+                                case "File":
+                                        System.out.println("[Phoebe]: File recieved - " + messageEntry.fileName);
+                                        System.out.println("[Phoebe]: Type 'View' to open it, or anything else to skip");
+                                        String fileChoice = scanner.nextLine().trim();
+
+                                    break;
+
+                                default:
+                                    System.out.println("[Phoebe]: Unknown Content type given");
+                                    break;
+                            }
+                            
                         System.out.println("[Phoebe]: Type 'Delete' if you wish to delete the message, or any other text to return to leave menu.");
                         String deleteMsg = scanner.nextLine().trim().toUpperCase(); 
                             if (deleteMsg.equals("DELETE")) {
@@ -223,20 +247,21 @@ public class Phoebe {
                     break;    
 
                 case "/IMAGE": 
-                        System.out.println("[Image-Command]Filepath:");
+                        System.out.println("[Phoebe]: Filepath:");
                         String imgPath = scanner.nextLine().trim();
-                        System.out.println("[Image-Command]Send To:");
+                        System.out.println("[Phoebe]: Send To:");
                         String imgReceiver = scanner.nextLine().trim();
-                        System.out.println("[Image-Command]Allow user to read? (yes or no):");
+                        System.out.println("[Phoebe]: Allow user to read? (yes or no):");
                         String imgReadAllow = scanner.nextLine().trim();
                         boolean imgRead = imgReadAllow.isEmpty() || imgReadAllow.equalsIgnoreCase("yes") 
                         || imgReadAllow.equalsIgnoreCase("y");
-                        if (!imgRead) { System.out.println("([Phoebe]: Read isn't allowed, ending command.)"); break;}
+                             if (!imgRead) { System.out.println("[Phoebe]: Read isn't allowed, ending command"); break;}
                         System.out.println("Allow user to download? [Yes or No : Default = Yes]");
                         String imgDownloadAllow = scanner.nextLine().trim();
                         boolean imgDownload = imgDownloadAllow.isEmpty() || imgDownloadAllow.equalsIgnoreCase("yes") 
                         || imgDownloadAllow.equalsIgnoreCase("y");
-                        System.out.println("[Expiration Time] Expiry date/time ( DD/MM/YYYY HH:mm UTC, or leave empty for no expire)");
+                        System.out.println("[Phoebe]: Reminder!! Currently UTC is BST- 1");
+                        System.out.println("[Phoebe]: Expiry date/time ( dd/MM/yyyy HH:mm UTC, or leave empty for no expire)");
                         String imgExpiry = scanner.nextLine().trim();
                         StickyPolicy imgPolicy = new StickyPolicy.Builder().allowRead(imgRead).allowDownload(imgDownload).expiryFromInput(imgExpiry).build();
                         //if (imgPolicy.hasFailed()){
@@ -254,19 +279,21 @@ public class Phoebe {
                     break;
 
                 case "/FILE": 
-                        System.out.println("[File-Command]Filepath:");
+                        System.out.println("[Phoebe]: Please note, only Txt and PDF files can be viewed by others");
+                        System.out.println("[Phoebe]Filepath:");
                         String fileFilePath = scanner.nextLine().trim();
-                        System.out.println("[File-Command]Send To:");
+                        System.out.println("[Phoebe]Send To:");
                         String fileReceiver = scanner.nextLine().trim();
-                        System.out.println("[File-Command]Allow user to read? (yes or no):");
+                        System.out.println("[Phoebe]Allow user to read? (yes or no):");
                         String fileReadAllow = scanner.nextLine().trim();
                         boolean fileRead = fileReadAllow.isEmpty() || 
                         fileReadAllow.equalsIgnoreCase("yes") || fileReadAllow.equalsIgnoreCase("y");
-                        if (!fileRead) { System.out.println("([Phoebe]: Read isn't allowed, ending command.)"); break;}
+                            if (!fileRead) { System.out.println("([Phoebe]: Read isn't allowed, ending command.)"); break;}
                         System.out.println("Allow user to download? [Yes or No : Default = Yes]");
                         String fileDownloadAllow = scanner.nextLine();
                         boolean fileDownload = fileDownloadAllow.isEmpty() || fileDownloadAllow.equalsIgnoreCase("yes")
                         || fileDownloadAllow.equalsIgnoreCase("y"); 
+                        System.out.println("[Phoebe]: Reminder!! Currently UTC is BST- 1");
                         System.out.println("[Expiration Time] Expiry date/time ( DD/MM/YYYY HH:mm UTC, or leave empty for no expire)");
                         String fileExpiry = scanner.nextLine().trim();
                         StickyPolicy filePolicy = new StickyPolicy.Builder().allowRead(fileRead).allowDownload(fileDownload).expiryFromInput(fileExpiry).build();
@@ -575,26 +602,26 @@ public class Phoebe {
                                     break;
                                 }      
                             String textContent = Crow.getString("Message");
-                            messageInbox.add(new UserInbox(sender,textContent,incomingPolicy));   // this needs those types added to it
+                            messageInbox.add(new UserInbox(sender,textContent,"Text","",incomingPolicy));  
                             System.out.println("[Phoebe]: " + sender + " Has sent a message to you, do /Inbox to view.");
                             break;
 
                         case "Image":
                             StickyPolicy imgPolicy = StickyPolicy.fromJSON(Oculus.getJSONObject("Policy"));
                                 if (imgPolicy.isExpired()){
-                                    System.out.println("[Phoebe]: Recieved an expired Image from" + sender + " It will not be downloaded.");
+                                    System.out.println("[Phoebe]: Recieved an expired Image from :" + sender + ", It will not be viewable.");
                                 }
-                            //String imgContent = Crow.get("Message");
-                            System.out.println("["+ sender +"]: " + "sent an image only you can see, it expires at : "); // add the Expiry variable after
-                            FileConversions.B64ToImage(sender,Crow.getString("Message"), Crow.getString("FileName"));
+                            messageInbox.add(new UserInbox(sender, Crow.getString("Message"), "Image", Crow.getString("FileName"), imgPolicy));
+                            System.out.println("[Phoebe]:" + sender + " has sent you a message, use /Inbox to view it."); // add the Expiry variable after
                             break;
                             
-                        case "File":   // do same as ^ when this one is made
+                        case "File":  
                             StickyPolicy filePolicy = StickyPolicy.fromJSON(Oculus.getJSONObject("Policy"));
-                            PolicyEnforcer fileEnforcer = new PolicyEnforcer(filePolicy);
-                            if (!fileEnforcer.canRead())    break; 
+                                if (filePolicy.isExpired()){
+                                   System.out.println("[Phoebe]: Recieved an expired File from :" + sender + ", It will not be viewable.");
+                                }
+                            messageInbox.add(new UserInbox(sender, Crow.getString("Message"), "File", Crow.getString("FileName"), filePolicy));    
                             System.out.println("["+ sender +"]: " + "sent a file only you can see, it expires at :"); // add the Expiry variable after
-                            FileConversions.B64ToFile(sender,Crow.getString("Message"),Crow.getString("FileName"));
                             break;
 
                         case "Update_Request":
@@ -610,6 +637,7 @@ public class Phoebe {
                                     System.out.println("[Phoebe]: Failed to process Update Request.");
                                 }
                                 break;
+
                         case "Update_Response":
                                 try {
                                     DHT receivedDHT = DHT.fromJson(Oculus.getJSONObject("DHT"));
@@ -618,7 +646,8 @@ public class Phoebe {
                                 } catch (Exception e) {
                                     System.out.println("[Phoebe]: DHT table update failed");
                                 }
-                                break;    
+                                break;   
+
                         case "Update_Denied":
                             System.out.println("[Phoebe]: " + sender + " denied DHT sync request");
                             break;
@@ -627,8 +656,8 @@ public class Phoebe {
                             System.out.println("[Phoebe]: " + sender  + " sent an unknown message type: " + typeOfData);
                                 break;
                     }
-                  } catch (Exception e) {// Not JSON or malformed, print raw as fallback
-                    System.out.println(message);
+                  } catch (Exception e) {
+                    System.out.println(message + "peerHandler mess up");
                 }
             }
             } catch (IOException e) {
@@ -697,15 +726,15 @@ public class Phoebe {
     public static class UserInbox{
         public final String sender;
         public final String content;
-       // public final String type;     <- for inbox command eventually
-       // public final String fileName;  <- ditto ^ 
+        public final String type;     
+        public final String fileName;  
         public final StickyPolicy policy;
 
-        public UserInbox(String sender, String content, StickyPolicy policy){ //String type, String fileName
+        public UserInbox(String sender, String content, String type, String fileName, StickyPolicy policy){ 
             this.sender = sender;
             this.content = content;
-          //  this.type = type;
-           // this.fileName = fileName;
+            this.type = type;
+            this.fileName = fileName;
             this.policy = policy;
         }
     }

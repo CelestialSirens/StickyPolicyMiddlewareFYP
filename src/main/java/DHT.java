@@ -24,7 +24,7 @@ public class DHT {
             String finalName = username;
             if (table.containsKey(username)){
                 int counter = 1;
-                while (table.containsKey(username + "#" + counter));{
+                while (table.containsKey(username + "#" + counter)){  // Idea! Instead of the counter, use the timestamp formatter to give a Name - '' < time of when it was added first. :3
                 counter++;
                 }
             finalName = username + "#" + counter;
