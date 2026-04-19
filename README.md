@@ -89,13 +89,7 @@ Added a slight frame for other file support than just images / text messages. Ni
 Issues -- 
 If two or more Peers have the same username how do you define who the peer is? How do you stop this from occuring
 
-How to make sure a user can not corupt the privacy elements of the code by pretending to be another user i.e. IP spoof etc.
-
---> Need a discovery mechanism for the DHT
-------^ 
-So like no?? Technically DHT code is in it now. Does it work, no. Is it able to work eventually, probably.
-                          People connect and tables merge thats FINE but it breaks because I cant code and dont KNOW HOW THE . Its just broken.
-
+Remember to put the message TimeStamp in the UserInbox to show at what time the message was delivered.
 
 Need to add more comments that i can use in demo 
 
