@@ -1,11 +1,13 @@
 Phoebe$PeerHandler.class
 StickyPolicy$Watermark.class
+InboxFX.class
 DHT.class
 Phoebe$Peer.class
 FileConversions.class
 Phoebe.class
 Phoebe$ServerTask.class
 StickyPolicy$Builder.class
+Phoebe$UserInbox.class
 Phoebe$PolicyEnforcer.class
 Phoebe$PendingRequest.class
 E2eeManager.class

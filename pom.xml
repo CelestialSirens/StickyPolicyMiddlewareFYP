@@ -28,11 +28,13 @@
         <groupId>org.openjfx</groupId>
         <artifactId>javafx-controls</artifactId>
         <version>21</version>
+        <classifier>win</classifier>
     </dependency>
     <dependency>
         <groupId>org.openjfx</groupId>
         <artifactId>javafx-graphics</artifactId>
         <version>21</version>
+        <classifier>win</classifier>
     </dependency>
 </dependencies>
     <build>
@@ -50,7 +52,11 @@
             <artifactId>maven-compiler-plugin</artifactId>
             <version>3.11.0</version>
             <configuration>
-                 <release>${maven.compiler.release}</release>
+                 <release>21</release>
+                 <compilerargs>
+                    <arg>--add-modules</arg>
+                    <arg>javafx.controls,javafx.graphics</arg>
+                 </compilerargs>
             </configuration>
         </plugin>
         <plugin>
@@ -62,9 +68,11 @@
         <plugin>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-maven-plugin</artifactId>
-            <version>21</version>
+            <version>0.0.8</version>
             <configuration>
-                <mainClass>com.myproject.Phoebe</mainClass>
+                <mainClass>Phoebe</mainClass>
+                <option>--add-modules</option>
+                <option>javafx.controls,javafx.graphics</option>
             </configuration>
         </plugin>
     </plugins>
