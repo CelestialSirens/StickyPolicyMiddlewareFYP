@@ -31,7 +31,7 @@ public class Phoebe {
     public static void main(String[] args) throws IOException {
         Scanner scanner = new Scanner(System.in);
         System.out.println("--- Welcome to Phoebe ---");
-        System.out.print("Enter your username: ");
+        System.out.print("Enter your username: ");    // limit users to NOT have # in their name ... < --- for counter thingy 
         username = scanner.nextLine().trim();
       //  System.out.println("If using only in Intranet please type yes, otherwise Phoebe will use Public IP");
        // IP = scanner.nextLine().trim();
@@ -233,6 +233,13 @@ public class Phoebe {
                                         String imgChoice = scanner.nextLine().trim();
                                         if (imgChoice.equalsIgnoreCase("view")){
                                             InboxFX.showImage(messageEntry.sender, username, messageEntry.content, messageEntry.fileName);
+                                        } else if (imgChoice.equalsIgnoreCase("download")){
+                                            if (!messageEntry.policy.canDownload()){
+                                                System.out.println("[Phoebe]: Download not permitted by sender policies");
+                                            } else {
+                                                InboxFX.downloadImage(messageEntry.sender, username,messageEntry.content,messageEntry.fileName);
+                                            } 
+
                                         }
 
                                     break;
@@ -674,9 +681,10 @@ public class Phoebe {
                         default:
                             System.out.println("[Phoebe]: " + sender  + " sent an unknown message type: " + typeOfData);
                                 break;
+
                     }
                   } catch (Exception e) {
-                    System.out.println(message + "peerHandler mess up");
+                    System.out.println(message);
                 }
             }
             } catch (IOException e) {

@@ -23,6 +23,7 @@ public class StickyPolicy {
             this.allowDownload = builder.allowDownload;
         }
         public boolean canRead() {return allowRead;}
+        public boolean canDownload() {return allowDownload;}
         public boolean isExpired() {
             System.out.println("[Testing]: Checking expiry, value is " + this.expiryEpoch);
             if (this.expiryEpoch == 0) {return false;}

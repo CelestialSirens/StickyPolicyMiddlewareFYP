@@ -4,6 +4,8 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.concurrent.CompletableFuture;
 
+import org.json.JSONObject;
+
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -63,7 +65,7 @@ public class InboxFX {
                 root.setStyle("-fx-background-color: cyan;");
 
                 Stage stage = new Stage();
-                stage.setTitle("Image from " + sender + " -- " + fileName);
+                stage.setTitle("Image from " + sender + " -- " + fileName); // + sent at + expires at     < -- needs adding still
                 stage.setScene(new Scene(root));
                 stage.setResizable(false);
                 stage.show();
@@ -146,6 +148,33 @@ public class InboxFX {
     
 }
 
+public static void downloadImage(String sender, String reciever, String base64Data, String fileName) {
+    try {
+        byte[] imageBytes = Base64.getDecoder().decode(base64Data);
+        String downloadsPath = System.getProperty("user.home") + File.separator + "Downloads";
+        File outputFile = new File(downloadsPath + File.separator + fileName);
+        java.nio.file.Files.write(outputFile.toPath(), imageBytes);
+
+        long timestamp = Instant.now().getEpochSecond();
+        String watermark = "Phoebe~/" + StickyPolicy.Watermark.generateWatermark(sender, reciever, timestamp);
+
+        JSONObject metadata = new JSONObject()
+            .put("sender", sender)
+            .put("reciever", reciever)
+            .put("timestamp", timestamp)
+            .put("originalFileName", fileName)
+            .put("watermark", watermark);
+
+        File metaFile = new File(downloadsPath + File.separator + fileName + ".phoebe");
+        java.nio.file.Files.writeString(metaFile.toPath(), metadata.toString(4));
+
+            System.out.println("[Phoebe]: Image Saved to " + outputFile.getAbsolutePath());
+            System.out.println("[Phoebe]: Metadata Saved to " + metaFile.getAbsolutePath());
+            System.out.println("[Phoebe]: Watermark: " + watermark);
+        } catch (Exception e) {
+            System.out.println("[Phoebe]: Download failed: " + e.getMessage());
+        }
+}
 }
 
     
