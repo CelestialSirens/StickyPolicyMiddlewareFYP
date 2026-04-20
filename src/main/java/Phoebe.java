@@ -1,4 +1,5 @@
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -13,6 +14,8 @@ import java.util.Map;
 import java.util.Scanner;
 
 import org.json.JSONObject;
+
+import javafx.application.Platform;
 public class Phoebe {   
 
     private static final DHT dht = new DHT();
@@ -41,6 +44,12 @@ public class Phoebe {
         localIp = InetAddress.getLocalHost().getHostAddress();
       //  IP = getPublicIP();
         new Thread(new ServerTask(myPort)).start();
+        try {
+            Platform.startup(() -> {});
+            Platform.setImplicitExit(false);
+        } catch (IllegalStateException e) {
+            Platform.setImplicitExit(false);
+        }
         try {
             dht.register(username, localIp, myPort);
             username = dht.getLastRegisteredName();
@@ -222,6 +231,9 @@ public class Phoebe {
                                         System.out.println("[Phoebe]: Image recieved - " + messageEntry.fileName);
                                         System.out.println("[Phoebe]: Type 'View' to open it, or anything else to skip");
                                         String imgChoice = scanner.nextLine().trim();
+                                        if (imgChoice.equalsIgnoreCase("view")){
+                                            InboxFX.showImage(messageEntry.sender, username, messageEntry.content, messageEntry.fileName);
+                                        }
 
                                     break;
 
@@ -247,8 +259,14 @@ public class Phoebe {
                     break;    
 
                 case "/IMAGE": 
-                        System.out.println("[Phoebe]: Filepath:");
-                        String imgPath = scanner.nextLine().trim();
+                        System.out.println("[Phoebe]: Opening File picker");
+                        File imgFile = InboxFX.FilePicker.pickImage();
+                        if (imgFile == null){
+                            System.out.println("[Phoebe]: No file selected, cancelling command");
+                            break;
+                        }
+                        String imgPath = imgFile.getAbsolutePath();
+                        System.out.println("[Phoebe]: Selected: " + imgPath);
                         System.out.println("[Phoebe]: Send To:");
                         String imgReceiver = scanner.nextLine().trim();
                         System.out.println("[Phoebe]: Allow user to read? (yes or no):");
@@ -270,8 +288,9 @@ public class Phoebe {
                         //}
                         try {
                             String ext = FileConversions.getExtension(imgPath);
+                            String actualName = imgFile.getName();
                             String b64 = FileConversions.imageToB64(imgPath);
-                            String imgJson = jsonBuilder(username, imgReceiver, b64, "Image", ext, imgPolicy);
+                            String imgJson = jsonBuilder(username, imgReceiver, b64, "Image", actualName, imgPolicy);
                             sendTo(imgReceiver, imgJson);
                         } catch (Exception e) {
                             System.out.println("[Phoebe]: "+ e.getMessage());

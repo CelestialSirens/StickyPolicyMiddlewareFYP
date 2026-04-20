@@ -1,0 +1,12 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Phoebe",
+            "request": "launch",
+            "mainClass": "Phoebe",
+            "console": "externalTerminal"
+        }
+    ]
+}
