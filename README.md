@@ -1,4 +1,4 @@
-# Phoebe - A Java based, Sticky Policy File transfer application
+# Phoebe - A Java P2P based, Sticky Policy File transfer and messaging application.
 
 Phoebe is a p2p console based chat application using a sticky policy privacy method to attempt user privacy.
 The goal of Phoebe is to create a Java based multi user P2P chat app, that allows users to send messages and images without fear of privacy infringments.
@@ -43,6 +43,14 @@ Meta data found attatched to the data sent is then processed once a user recieve
 
 
 # Features
+  
+  Phoebe allows users to message each other in group a public setting or in DM message fully E2ee. 
+    [Add screenshot of it]
+
+  Phoebe allows for Images and Files to be sent to other users in DM settings, currently no group image or file sharing is possible.
+  When sending an image or file, for increased privacy 
+  
+
   - Phoebe hosts a variety of commands that allow Users to specify what style of message or action they desire.
   - A simplified Distributed Hash table which allows users to merge tables with each other and update them to have additional users present.
   - A / 
