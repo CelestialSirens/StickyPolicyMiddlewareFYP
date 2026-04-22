@@ -248,6 +248,15 @@ public class Phoebe {
                                         System.out.println("[Phoebe]: File recieved - " + messageEntry.fileName);
                                         System.out.println("[Phoebe]: Type 'View' to open it, or anything else to skip");
                                         String fileChoice = scanner.nextLine().trim();
+                                        if (fileChoice.equalsIgnoreCase("view")){
+                                            InboxFX.showFile(messageEntry.sender, username, messageEntry.content, messageEntry.fileName);
+                                        } else if (fileChoice.equalsIgnoreCase("download")){
+                                            if (!messageEntry.policy.canDownload()){
+                                                System.out.println("[Phoebe]: Download not permitted by sender policies");
+                                            } else {
+                                                InboxFX.downloadFile(messageEntry.sender, username, messageEntry.content, messageEntry.fileName);
+                                            }
+                                        }
 
                                     break;
 
@@ -269,7 +278,7 @@ public class Phoebe {
                         System.out.println("[Phoebe]: Opening File picker");
                         File imgFile = InboxFX.FilePicker.pickImage();
                         if (imgFile == null){
-                            System.out.println("[Phoebe]: No file selected, cancelling command");
+                            System.out.println("[Phoebe]: No image selected, cancelling command");
                             break;
                         }
                         String imgPath = imgFile.getAbsolutePath();
@@ -306,8 +315,13 @@ public class Phoebe {
 
                 case "/FILE": 
                         System.out.println("[Phoebe]: Please note, only Txt and PDF files can be viewed by others");
-                        System.out.println("[Phoebe]Filepath:");
-                        String fileFilePath = scanner.nextLine().trim();
+                        File fileFile = InboxFX.FilePicker.pickFile();
+                        if (fileFile == null){
+                            System.out.println("[Phoebe]: No file selected, cancelling command");
+                            break;
+                        }
+                        String fileFilePath = fileFile.getAbsolutePath();
+                        System.out.println("[Phoebe]: Selected: " + fileFilePath);
                         System.out.println("[Phoebe]Send To:");
                         String fileReceiver = scanner.nextLine().trim();
                         System.out.println("[Phoebe]Allow user to read? (yes or no):");
@@ -325,8 +339,9 @@ public class Phoebe {
                         StickyPolicy filePolicy = new StickyPolicy.Builder().allowRead(fileRead).allowDownload(fileDownload).expiryFromInput(fileExpiry).build();
                         try {
                             String ext = FileConversions.getExtension(fileFilePath);
+                            String actualName = fileFile.getName();
                             String b64 = FileConversions.fileToB64(fileFilePath); 
-                            String fileJson = jsonBuilder(username, fileReceiver, b64, "File", ext, filePolicy);
+                            String fileJson = jsonBuilder(username, fileReceiver, b64, "File", actualName, filePolicy);
                             sendTo(fileReceiver, fileJson);
                         } catch (Exception e) {
                             System.out.println("[Phoebe]: "+ e.getMessage());
@@ -638,7 +653,7 @@ public class Phoebe {
                                     System.out.println("[Phoebe]: Recieved an expired Image from :" + sender + ", It will not be viewable.");
                                 }
                             messageInbox.add(new UserInbox(sender, Crow.getString("Message"), "Image", Crow.getString("FileName"), imgPolicy));
-                            System.out.println("[Phoebe]:" + sender + " has sent you a message, use /Inbox to view it."); // add the Expiry variable after
+                            System.out.println("[Phoebe]: " + sender + " has sent you an image, use /Inbox to view it."); // add the Expiry variable after
                             break;
                             
                         case "File":  
@@ -647,7 +662,7 @@ public class Phoebe {
                                    System.out.println("[Phoebe]: Recieved an expired File from :" + sender + ", It will not be viewable.");
                                 }
                             messageInbox.add(new UserInbox(sender, Crow.getString("Message"), "File", Crow.getString("FileName"), filePolicy));    
-                            System.out.println("["+ sender +"]: " + "sent a file only you can see, it expires at :"); // add the Expiry variable after
+                            System.out.println("[Phoebe]: "+ sender +" has sent you a file, use /Inbox to view it "); // add the Expiry variable after
                             break;
 
                         case "Update_Request":

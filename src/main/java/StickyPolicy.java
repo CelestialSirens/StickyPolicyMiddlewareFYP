@@ -109,8 +109,12 @@ public class TimeCheck {
         return java.time.LocalDateTime.parse(dateTimeString).toInstant(java.time.ZoneOffset.UTC).getEpochSecond();
 
     }
-
 }
+public class DateTimeFormatter{
+    
+}
+
+
 public class Watermark {
 
     public static String generateWatermark(String sender, String receiever, long timestamp){
