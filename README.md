@@ -86,31 +86,3 @@ Meta data found attatched to the data sent is then processed once a user recieve
 
 
 
-
-
-
-
-
-
-
-
-
-## Personal notes 
-EVERYTHING IS ON FIRE AND IM BEHIND A LOT  
-
-Current plans for addition, The GUI is just the jar file that makes the window open, Not sure how / why it isnt happening anymore....
-
-Added a new switch case for the actual receiving of data from other users, allows for more specific instructions on whats read etc than before.
-
-Added a slight frame for other file support than just images / text messages. Nio sees any raw data as the same so its practicially the same code for PDF, PNG, JPEG etc just actually ensuring these are read correctly is a different case.
-  - With this fact, want to automate the data as to "what" file type the data actually is. Saw a useful website on how to get this **https://www.geeksforgeeks.org/java/how-to-get-the-file-extension-in-java/** however currently not implemented due to the "what if data is not actually this file type".
-  - Write about above security flaw IF actually added to code base in the report ...
-
-
-Issues -- 
-If two or more Peers have the same username how do you define who the peer is? How do you stop this from occuring
-
-Remember to put the message TimeStamp in the UserInbox to show at what time the message was delivered.
-
-Need to add more comments that i can use in demo 
-
