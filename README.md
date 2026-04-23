@@ -63,7 +63,20 @@ Meta data found attatched to the data sent is then processed once a user recieve
 
 # Usage
 
+  ``` 
+  git clone https://github.com/CelestialSirens/StickyPolicyMiddlewareFYP
 
+  cd StickyPolicyMiddlewareFYP
+
+  java run Phoebe.java 
+  ```
+  After Phoebe is running, a user MUST know a bootstrap nodes information to be able to communicate with them.
+  
+  ^ this needs editing to be usable still 
+
+  To use Phoebe some prerequisites are needed. 
+  First a user must have downloaded this repository 
+    
 
 
 

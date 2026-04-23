@@ -1,26 +1,39 @@
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.awt.image.BufferedImage;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
-
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.PDFRenderer;
 import org.json.JSONObject;
-
 import javafx.application.Platform;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Label;
+import javafx.scene.control.Button;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+
+
+
 
 
 
@@ -67,13 +80,104 @@ public class InboxFX {
                 Stage stage = new Stage();
                 stage.setTitle("Image from " + sender + " -- " + fileName); // + sent at + expires at     < -- needs adding still
                 stage.setScene(new Scene(root));
-                stage.setResizable(false);
+                stage.setResizable(true);
                 stage.show();
             } catch (Exception e) { showError("Failed to open image: " + e.getMessage());
             }
         });
        
     }    
+
+    public static void showFile(String sender, String reciever, String base64Data, String fileName){
+            try{
+                Platform.startup(() -> {});
+            } catch(IllegalStateException e){
+            } Platform.runLater(() -> {
+                try{
+                    byte[] fileBytes = Base64.getDecoder().decode(base64Data);
+                    String watermarkText = "Phoebe" + StickyPolicy.Watermark.generateWatermark(sender, reciever, Instant.now().getEpochSecond());
+                    String ext = fileName.contains(".") ? fileName.substring(fileName.lastIndexOf('.')+ 1).toLowerCase() : "";
+                    switch (ext) {
+                        case "pdf" -> showPDF(sender, fileName, fileBytes, watermarkText);
+                        default -> showError("Unsupported File Type:" + ext);
+                    }
+                }
+                catch(Exception e){  showError("Failed to open File:" + e.getMessage());
+                }
+            });
+    }
+    public static void showPDF(String sender, String fileName, byte[] fileBytes, String watermarkText){
+            try{
+                int[] currentPage = {0};
+                PDDocument document = Loader.loadPDF(fileBytes);
+                PDFRenderer renderer = new PDFRenderer(document);
+                int pageCount = document.getNumberOfPages();
+                List<javafx.scene.image.Image> pages = new ArrayList<>();
+                for (int i = 0; i < pageCount; i++){
+                    BufferedImage buffered = renderer.renderImageWithDPI(i,150);
+                    pages.add(bufferedToFX(buffered));
+                }
+                document.close();
+
+                ImageView pageView = new ImageView(pages.get(0));
+                pageView.setPreserveRatio(true);
+                pageView.setFitWidth(800);
+
+                Canvas watermarkCanvas = new Canvas(800, pageView.getFitHeight() > 0 ? pageView.getFitHeight() : 1000);
+                drawWatermark(watermarkCanvas, watermarkText);
+
+                StackPane pageStack = new StackPane(pageView, watermarkCanvas);
+                pageStack.setStyle("-fx-background-color: white;");
+
+                ScrollPane scrollPane = new ScrollPane(pageStack);
+                scrollPane.setFitToWidth(true);
+                scrollPane.setStyle("-fx-background-color: red;");
+
+                Button prButton = new Button("< Prev");
+                Button nxButton = new Button("Next >");
+                Label pageLabel = new Label("Page 1 of " + pageCount);
+                pageLabel.setTextFill(Color.ALICEBLUE);
+
+                prButton.setDisable(true);
+                if (pageCount == 1) nxButton.setDisable(true); 
+
+                prButton.setOnAction(e -> {
+                    pageView.setImage(pages.get(currentPage[0]));
+                    drawWatermark(watermarkCanvas, watermarkText);
+                    pageLabel.setText("Page " + (currentPage[0] + 1) + " of " + pageCount);
+                    prButton.setDisable(currentPage[0] == 0);
+                    nxButton.setDisable(false);    
+                });
+                nxButton.setOnAction(e -> {
+                    currentPage[0]++;
+                    pageView.setImage(pages.get(currentPage[0]));
+                    drawWatermark(watermarkCanvas,watermarkText);
+                    pageLabel.setText("Page " + (currentPage[0] + 1) + " of " + pageCount);
+                    nxButton.setDisable(currentPage[0] == pageCount - 1);
+                    prButton.setDisable(false);
+                });
+
+                HBox navBar = new HBox(10, prButton, pageLabel, nxButton);
+                navBar.setAlignment(Pos.CENTER);
+                navBar.setPadding(new Insets(6));
+                navBar.setStyle("-fx-background-color: blue;");
+
+                Label infoLabel = buildInfoBar("From: " + sender + "  /  " + fileName + " / " + watermarkText);
+                BorderPane root = new BorderPane();
+                root.setCenter(scrollPane);
+                root.setTop(navBar);
+                root.setBottom(infoLabel);
+
+                Stage stage = new Stage();
+                stage.setTitle("PDF from " + sender + "--" + fileName);
+                stage.setScene(new Scene(root, 860,800));
+                stage.show();
+            } catch (Exception e) { showError("Failed to render PDF: " + e.getMessage()); }
+    }
+    public static javafx.scene.image.Image bufferedToFX(BufferedImage buffered) {
+        return SwingFXUtils.toFXImage(buffered, null);
+    }
+
     private static void drawWatermark(Canvas canvas, String watermarkText) {
         GraphicsContext gc = canvas.getGraphicsContext2D();
         gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
@@ -120,7 +224,11 @@ public class InboxFX {
         public static File pickImage() {
             return pick("Select Image", new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg"));
         }
-        
+        public static File pickFile(){
+            return pick("Select File", new FileChooser.ExtensionFilter("Files", "*.pdf", "*.txt"));
+        }
+
+
         private static File pick(String title, FileChooser.ExtensionFilter ...filters){
             CompletableFuture<File> future = new CompletableFuture<>();
             try {
@@ -175,6 +283,11 @@ public static void downloadImage(String sender, String reciever, String base64Da
             System.out.println("[Phoebe]: Download failed: " + e.getMessage());
         }
 }
+
+public static void downloadFile(String sender, String reciever, String base64Data, String fileName){
+
+}
+
 }
 
     
