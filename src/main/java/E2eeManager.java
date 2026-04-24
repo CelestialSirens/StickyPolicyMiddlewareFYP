@@ -6,6 +6,7 @@ import java.security.MessageDigest;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.spec.ECGenParameterSpec;
+import java.security.spec.NamedParameterSpec;
 import java.security.spec.X509EncodedKeySpec;
 
 import javax.crypto.Cipher;
@@ -13,6 +14,10 @@ import javax.crypto.KeyAgreement;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+
+import org.bouncycastle.crypto.digests.SHA256Digest;
+import org.bouncycastle.crypto.generators.HKDFBytesGenerator;
+import org.bouncycastle.jcajce.provider.asymmetric.edec.KeyAgreementSpi.X25519;
 
 public class E2eeManager {
     private KeyPair keyPair;
@@ -23,8 +28,8 @@ public class E2eeManager {
     //kpg.initialize(new ECGenParameterSpec("secp256r1")); // remember Signal uses this curve <-- mention it in report
 
   public E2eeManager() throws Exception {
-        KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
-        kpg.initialize(new ECGenParameterSpec("curve25519")); // remember Signal uses this curve <-- mention it in report
+        KeyPairGenerator kpg = KeyPairGenerator.getInstance("XDH");
+        kpg.initialize(NamedParameterSpec.X25519); 
         this.keyPair = kpg.generateKeyPair();
     }
      public byte[] getPublicKeyBytes() {
@@ -32,10 +37,10 @@ public class E2eeManager {
     }
     
     public void deriveSharedSecret(byte[] peerPubKeyBytes) throws Exception {
-        KeyFactory kF = KeyFactory.getInstance("EC");
+        KeyFactory kF = KeyFactory.getInstance("XDH");
         PublicKey peerPubKey = kF.generatePublic(new X509EncodedKeySpec(peerPubKeyBytes));
 
-        KeyAgreement kA = KeyAgreement.getInstance("ECDH");
+        KeyAgreement kA = KeyAgreement.getInstance("XDH");
         kA.init(keyPair.getPrivate());
         kA.doPhase(peerPubKey, true);
 
@@ -43,7 +48,8 @@ public class E2eeManager {
         this.sharedSecret = deriveAESKEY(rawSecret);
     }
              private SecretKey deriveAESKEY(byte[] rawSecret) throws Exception{
-                    MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
+                    HKDFBytesGenerator hkdf = new HKDFBytesGenerator(new SHA256Digest());
+                    
                     byte [] keyBytes = sha256.digest(rawSecret);
                     return new SecretKeySpec(keyBytes,"AES");
             }

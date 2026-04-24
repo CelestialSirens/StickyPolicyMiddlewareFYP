@@ -186,7 +186,7 @@ public class InboxFX {
         gc.rotate(-30);
         gc.translate(-canvas.getWidth() / 2, - canvas.getHeight() / 2);
         gc.setFont(Font.font("Serif", FontWeight.BOLD, 36));
-        gc.setFill(Color.color(1, 1, 1,0.15));
+        gc.setFill(Color.color(1, 1, 1,0.25));
         double textWidth = watermarkText.length() * 22;
         double textHeight = 36;
         for (double y = -canvas.getHeight(); y < canvas.getHeight() * 2; y += textHeight + 60){
