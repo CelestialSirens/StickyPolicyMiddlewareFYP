@@ -8,6 +8,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -292,7 +293,7 @@ public class Phoebe {
                              if (!imgRead) { System.out.println("[Phoebe]: Read isn't allowed, ending command"); break;}
                         System.out.println("Allow user to download? [Yes or No : Default = Yes]");
                         String imgDownloadAllow = scanner.nextLine().trim();
-                        boolean imgDownload = imgDownloadAllow.isEmpty() || imgDownloadAllow.equalsIgnoreCase("yes") 
+                        boolean imgDownload = imgDownloadAllow.equalsIgnoreCase("yes") 
                         || imgDownloadAllow.equalsIgnoreCase("y");
                         System.out.println("[Phoebe]: Reminder!! Currently UTC is BST- 1");
                         System.out.println("[Phoebe]: Expiry date/time ( dd/MM/yyyy HH:mm UTC, or leave empty for no expire)");
@@ -331,7 +332,7 @@ public class Phoebe {
                             if (!fileRead) { System.out.println("([Phoebe]: Read isn't allowed, ending command.)"); break;}
                         System.out.println("Allow user to download? [Yes or No : Default = Yes]");
                         String fileDownloadAllow = scanner.nextLine();
-                        boolean fileDownload = fileDownloadAllow.isEmpty() || fileDownloadAllow.equalsIgnoreCase("yes")
+                        boolean fileDownload = fileDownloadAllow.equalsIgnoreCase("yes")
                         || fileDownloadAllow.equalsIgnoreCase("y"); 
                         System.out.println("[Phoebe]: Reminder!! Currently UTC is BST- 1");
                         System.out.println("[Expiration Time] Expiry date/time ( DD/MM/YYYY HH:mm UTC, or leave empty for no expire)");
@@ -478,25 +479,41 @@ public class Phoebe {
             int peerListenPort = port;
             synchronized (dht) {
                 for (Map.Entry<String, DHT.PeerInfo> en : dht.getTable().entrySet()) {
-                    if (en.getValue().ip.equals(ip)){
+                    if (en.getValue().ip.equals(ip) && en.getValue().port == port){
                         peerUsername = en.getKey();
                         break;
                     } 
                 }
             }
-            setupStreams(socket, out, input, true, peerUsername,peerListenPort);
-            System.out.println("Connected to peer at " + ip + ":" + port);
+            E2eeManager e2ee = new E2eeManager();
+            String myPublicKey = Base64.getEncoder().encodeToString(e2ee.getPublicKeyBytes());
+            out.println("PublicKey:" + myPublicKey);
+            String peerPublicKey = input.readLine();
+            if (peerPublicKey != null && peerPublicKey.startsWith("PublicKey:")){
+                byte[] peerPubKeyBytes = Base64.getDecoder().decode(peerPublicKey.substring(10));
+                e2ee.deriveSharedSecret(peerPubKeyBytes);
+                System.out.println("[Phoebe]: E2EE established with " + peerUsername);
+            } else {
+                System.out.println("[Phoebe]: E2EE key exchange with " + peerUsername + " failed, will not connect. Try again later..");
+                socket.close();
+                return;
+            }
+            setupStreams(socket, out, input, true, peerUsername, peerListenPort, e2ee);
+            System.out.println("[Phoebe]: Connected to peer at " + ip + ":" + port);
         } catch (IOException e) {
-            System.out.println("Failed to connect to " + ip + ":" + port);
+            System.out.println("[Phoebe]: Failed to connect to " + ip + ":" + port);
+        } catch (Exception e){
+            System.out.println("[Phoebe]: E2EE setup error: " + e.getMessage());
         }
     }
     // New code processes username from connect->peer (for below)
-    private static void setupStreams(Socket socket, PrintWriter out, BufferedReader in, boolean handShakeDone, String knownUsername, int listenport) throws IOException {
-        peers.add(new Peer(knownUsername != null ? knownUsername :"defaultName", 
+    private static void setupStreams(Socket socket, PrintWriter out, BufferedReader in, boolean handShakeDone, String knownUsername, int listenport, E2eeManager e2ee) throws IOException {
+        Peer peer = new Peer(knownUsername != null ? knownUsername :"defaultName", 
         socket.getInetAddress().getHostAddress(), 
         listenport, 
-        out));
-        new Thread(new PeerHandler(socket, out, in, handShakeDone, listenport)).start();
+        out, e2ee);
+        peers.add(peer);
+        new Thread(new PeerHandler(socket, out, in, handShakeDone, listenport,peer)).start();
     }
 
     // Helper to send a message to everyone in the peers list
@@ -522,10 +539,10 @@ public class Phoebe {
                     Socket socket = serverSocket.accept();
                     PrintWriter out = new PrintWriter(socket.getOutputStream(),true);
                     BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                    setupStreams(socket,out, in, false, null,0);
+                    setupStreams(socket,out, in, false, null,0,null);
                     System.out.println("A new peer has connected to you!");
                 }
-            } catch (IOException e) {
+            } catch (IOException e) {   
                 e.printStackTrace();
             }
         }
@@ -541,13 +558,15 @@ public class Phoebe {
         private final PrintWriter out;
         private final boolean handShakeDone;
         private final int peerListenPort;
+        private final Peer peer;
 
-        public PeerHandler(Socket socket, PrintWriter out, BufferedReader in, boolean handShakeDone, int peerListenPort) throws IOException {
+        public PeerHandler(Socket socket, PrintWriter out, BufferedReader in, boolean handShakeDone, int peerListenPort, Peer peer) throws IOException {
             this.socket = socket;
             this.out = out;
             this.in = in;
             this.handShakeDone = handShakeDone;
             this.peerListenPort = peerListenPort;
+            this.peer = peer;
         }
         @Override
         public void run() {
@@ -577,6 +596,27 @@ public class Phoebe {
                 out.println(dht.toJson().toString());
                 out.println("READY");
                 try {
+                    E2eeManager e2ee = new E2eeManager();
+                    String peerPublicKey = in.readLine();
+                    if (peerPublicKey != null && peerPublicKey.startsWith("PublicKey:")){
+                        byte[] peerPubKeyBytes = Base64.getDecoder().decode(peerPublicKey.substring(10));
+                        e2ee.deriveSharedSecret(peerPubKeyBytes);
+                    } else {
+                        System.out.println("[Phoebe]: E2EE key exchange with failed.");
+                        socket.close();
+                        return;
+                    }
+                    String myPublicKey = Base64.getEncoder().encodeToString(e2ee.getPublicKeyBytes());
+                    out.println("PublicKey:" + myPublicKey);
+                    peer.e2ee = e2ee;
+                    System.out.println("[Phoebe]: E2EE established with " + senderUsername);
+                } catch (Exception e) {
+                    System.out.println("[Phoebe]: E2EE setup error: " + e.getMessage());
+                    socket.close();
+                    return;
+                }
+
+                try {
                     dht.register(senderUsername, socket.getInetAddress().getHostAddress(), d1ListenPort);
                 } catch (Exception e) {
                     System.out.println("[Peer handler]:"+ e.getMessage());
@@ -590,7 +630,7 @@ public class Phoebe {
                                 resolvedName, 
                                 socket.getInetAddress().getHostAddress(),
                                 d1ListenPort,
-                                out));
+                                out, peer.e2ee));
                                 break;
                         }
                     }
@@ -612,7 +652,7 @@ public class Phoebe {
                     for (Peer peer : peers){
                         if (peer.out == out){
                             peers.remove(peer);
-                            peers.add(new Peer( realUsername, socket.getInetAddress().getHostAddress(), peerListenPort, out));
+                            peers.add(new Peer( realUsername, socket.getInetAddress().getHostAddress(), peerListenPort, out,peer.e2ee));
                             break;
                         }
                     }
@@ -621,8 +661,19 @@ public class Phoebe {
             } catch (Exception e){
                 System.out.println("[Phoebe]: Could not resolve username");
             }
-                    String message;
-                while ((message = in.readLine()) != null) {
+                String rawline;
+                while ((rawline = in.readLine()) != null) {
+                String message;    
+                    try{
+                        if (peer.e2ee != null) {
+                        byte[] encryptedBytes = Base64.getDecoder().decode(rawline);
+                        message = peer.e2ee.decrypt(encryptedBytes); 
+                    } else {
+                        message = rawline;  
+                    } 
+                }catch (Exception e) {
+                        message = rawline;
+                    }
                     try{
                     JSONObject json = new JSONObject(message);
                     JSONObject Oculus = json.getJSONObject("Oculus");
@@ -725,14 +776,15 @@ public class Phoebe {
         public final String ip;
         public final int port;
         public final PrintWriter out;
-      //  public final E2eeManager e2ee;
+        public volatile E2eeManager e2ee;
 
-        public Peer(String username, String ip, int port, PrintWriter out){ //E2eeManager e2ee){    < -- add this back in after, 
+        public Peer(String username, String ip, int port, PrintWriter out, E2eeManager e2ee){    
+
             this.username =username;
             this.ip = ip;
             this.port = port;
             this.out = out;
-           // this.e2ee = e2ee;
+            this.e2ee = e2ee;
         } 
     }
     public static class PolicyEnforcer {

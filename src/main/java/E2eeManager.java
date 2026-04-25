@@ -1,11 +1,10 @@
 
+import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.security.MessageDigest;
 import java.security.PublicKey;
 import java.security.SecureRandom;
-import java.security.spec.ECGenParameterSpec;
 import java.security.spec.NamedParameterSpec;
 import java.security.spec.X509EncodedKeySpec;
 
@@ -17,7 +16,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.crypto.generators.HKDFBytesGenerator;
-import org.bouncycastle.jcajce.provider.asymmetric.edec.KeyAgreementSpi.X25519;
+import org.bouncycastle.crypto.params.HKDFParameters;
 
 public class E2eeManager {
     private KeyPair keyPair;
@@ -25,7 +24,6 @@ public class E2eeManager {
 
     // encrypt function https://medium.com/@pravallikayakkala123/understanding-aes-encryption-and-aes-gcm-mode-an-in-depth-exploration-using-java-e03be85a3faa
 
-    //kpg.initialize(new ECGenParameterSpec("secp256r1")); // remember Signal uses this curve <-- mention it in report
 
   public E2eeManager() throws Exception {
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("XDH");
@@ -47,22 +45,20 @@ public class E2eeManager {
         byte[] rawSecret = kA.generateSecret();
         this.sharedSecret = deriveAESKEY(rawSecret);
     }
-             private SecretKey deriveAESKEY(byte[] rawSecret) throws Exception{
-                    HKDFBytesGenerator hkdf = new HKDFBytesGenerator(new SHA256Digest());
-                    
-                    byte [] keyBytes = sha256.digest(rawSecret);
-                    return new SecretKeySpec(keyBytes,"AES");
-            }
+    private SecretKey deriveAESKEY(byte[] rawSecret) throws Exception{
+        HKDFBytesGenerator hkdf = new HKDFBytesGenerator(new SHA256Digest());
+        hkdf.init(new HKDFParameters(rawSecret, null, "phoebe-E2ee".getBytes(StandardCharsets.UTF_8)));
+        byte [] keyBytes = new byte[32];
+        return new SecretKeySpec(keyBytes,"AES");
+    }
 
-     
-   
     public byte[] encrypt(String plaintext) throws Exception{
         byte[] iv = new byte[12]; 
         new SecureRandom().nextBytes(iv);
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
         cipher.init(Cipher.ENCRYPT_MODE, sharedSecret, new GCMParameterSpec(128,iv));
 
-        byte[] ciphertext = cipher.doFinal(plaintext.getBytes("UTF-8"));
+        byte[] ciphertext = cipher.doFinal(plaintext.getBytes(StandardCharsets.UTF_8));
         byte[] attachedMsg = new byte[iv.length + ciphertext.length];
 
         System.arraycopy(iv, 0, attachedMsg, 0, iv.length);
@@ -70,11 +66,15 @@ public class E2eeManager {
         return attachedMsg;
     }
 
-    // decrypt function
-
-  //  public String decrypt(byte[] encryptedData) throws Exception{
-    //    byte[] iv = new byte[12];
-    //}
+    public String decrypt(byte[] encryptedData) throws Exception{
+        byte[] iv = new byte[12];
+        System.arraycopy(encryptedData, 0, iv, 0, 12);
+        byte[] ciphertext = new byte[encryptedData.length - 12];
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+        cipher.init(Cipher.DECRYPT_MODE, sharedSecret, new GCMParameterSpec(128,iv));
+        byte[] plaintext = cipher.doFinal(ciphertext);
+        return new String(plaintext, StandardCharsets.UTF_8);
+    }
 
 
 }
