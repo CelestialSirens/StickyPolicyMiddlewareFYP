@@ -214,8 +214,11 @@ public class Phoebe {
                                 break;
                             }       
                         List<UserInbox> toRemove = new ArrayList<>();   
-                        for (UserInbox entry : messageInbox){} 
-                        UserInbox messageEntry = messageInbox.get(0);
+                        for (int msg = 0; msg < messageInbox.size(); msg++){
+                            UserInbox messageEntry = messageInbox.get(msg);
+                            System.out.println("[Phoebe]: Message " + (msg+1) + " of " + messageInbox.size());
+                        
+                        
                         System.out.println("[Phoebe]: You have been sent a :" + messageEntry.type + " from " + messageEntry.sender); // add variable for time transformation here ); 
 
                             if (messageEntry.policy.isExpired()){
@@ -225,7 +228,11 @@ public class Phoebe {
                             } 
                             switch (messageEntry.type) {
                                 case "Text":
-                                        System.out.println("Content: " + messageEntry.content);
+                                        String readWatermark = InboxFX.showMessage(messageEntry.sender, username, messageEntry.content, messageEntry.policy);
+                                        if (readWatermark != null){
+                                            sendTo(messageEntry.sender, jsonBuilder(username, messageEntry.sender, readWatermark,
+                                                 "View_Notify", "", new StickyPolicy.Builder().build()));
+                                        }
                                     break;
 
                                 case "Image":
@@ -237,6 +244,7 @@ public class Phoebe {
                                            if (viewWatermark != null){
                                                     sendTo(messageEntry.sender, jsonBuilder(username, messageEntry.sender, viewWatermark,
                                                          "View_Notify" , messageEntry.fileName,new StickyPolicy.Builder().build()));
+                                                    }
                                         } else if (imgChoice.equalsIgnoreCase("download")){
                                             if (!messageEntry.policy.canDownload()){
                                                 System.out.println("[Phoebe]: Download not permitted by sender policies");
@@ -249,7 +257,6 @@ public class Phoebe {
                                             } 
 
                                         }
-                                    }
                                     break;
 
                                 case "File":
@@ -273,13 +280,17 @@ public class Phoebe {
                                     break;
                             }
                             
-                        System.out.println("[Phoebe]: Type 'Delete' if you wish to delete the message, or any other text to return to leave menu.");
-                        String deleteMsg = scanner.nextLine().trim().toUpperCase(); 
-                            if (deleteMsg.equals("DELETE")) {
-                                messageInbox.remove(0);
+                        System.out.println("[Phoebe]: Type 'Delete' if you wish to delete the message, or 'NEXT' for next message");
+                        String usrRply = scanner.nextLine().trim().toUpperCase(); 
+                            if (usrRply.equals("DELETE")) {
+                                messageInbox.remove(msg);
+                                msg--;
                                 System.out.println("[Phoebe]: Messaage has been deleted.");
+                            } else if (!usrRply.equals("NEXT")){
+                                break;
                             }
                         }
+                        }   
                     break;    
 
                 case "/IMAGE": 
@@ -400,9 +411,18 @@ public class Phoebe {
             for (Peer peer:peers){
                 System.out.println("[Testing]: Found peer: " + peer.username + "");  // and this .
                 if (peer.username.equals(targetName)){
-                    peer.out.println(message);
+                    try{
+                        if (peer.e2ee != null){
+                        byte[] encrypted = peer.e2ee.encrypt(message);
+                        peer.out.println(Base64.getEncoder().encodeToString(encrypted));
+                  } else {
+                        peer.out.println(message);
+                        }
+                    } catch (Exception e){
+                        System.out.println("[Phoebe]: Failed to encrypt message to: " + targetName);
+                        return false;
+                    }
                     return true;
-                }
             }
         }
         try {
@@ -424,6 +444,7 @@ public class Phoebe {
         }
         System.out.println("[Phoebe]: User "+ targetName + " Not found");
         return false;
+    }
     }
 
 
@@ -775,7 +796,6 @@ public class Phoebe {
                 // Peer disconnected
             } finally {
                 System.out.println("[Phoebe]: A peer disconnected." );
-                peers.removeIf(peer -> peer.out == out); // Maybe mention in report? Makes more accurate, https://www.w3schools.com/java/ref_arraylist_removeif.asp
                 synchronized (peers) {
                     for (Peer peer : peers){
                         if (peer.out == out){
@@ -784,7 +804,8 @@ public class Phoebe {
                         }
                     }
                 }
-                try { socket.close(); } catch (IOException e) {}
+                peers.removeIf(p -> p.out == out);                  
+                try {socket.close();} catch (IOException e){}
             }
         }
     }

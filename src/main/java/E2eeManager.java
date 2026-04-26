@@ -49,6 +49,7 @@ public class E2eeManager {
         HKDFBytesGenerator hkdf = new HKDFBytesGenerator(new SHA256Digest());
         hkdf.init(new HKDFParameters(rawSecret, null, "phoebe-E2ee".getBytes(StandardCharsets.UTF_8)));
         byte [] keyBytes = new byte[32];
+        hkdf.generateBytes(keyBytes, 0, 32);
         return new SecretKeySpec(keyBytes,"AES");
     }
 
@@ -70,6 +71,7 @@ public class E2eeManager {
         byte[] iv = new byte[12];
         System.arraycopy(encryptedData, 0, iv, 0, 12);
         byte[] ciphertext = new byte[encryptedData.length - 12];
+        System.arraycopy(encryptedData, 12, ciphertext, 0, ciphertext.length);
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
         cipher.init(Cipher.DECRYPT_MODE, sharedSecret, new GCMParameterSpec(128,iv));
         byte[] plaintext = cipher.doFinal(ciphertext);

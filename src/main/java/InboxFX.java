@@ -250,6 +250,49 @@ public class InboxFX {
 
        }); 
     }
+
+    public static String showMessage(String sender, String reciever, String content, StickyPolicy policy){
+        String watermarkText = "Phoebe~/" + StickyPolicy.Watermark.generateWatermark(sender, reciever, Instant.now().getEpochSecond());
+        
+        Platform.runLater(() -> {
+            try {
+                Label messageLabel = new Label(content);
+                messageLabel.setWrapText(true);
+                messageLabel.setPadding(new Insets(20));
+                messageLabel.setFont(Font.font("Serif",14));
+                messageLabel.setTextFill(Color.WHITE);
+                messageLabel.setStyle("-fx-background-color: black;");
+                messageLabel.setMaxWidth(600);
+
+                Label infoLabel = buildInfoBar("From: " + sender + " # " + watermarkText);
+                BorderPane root = new BorderPane();
+                root.setCenter(messageLabel);
+                root.setBottom(infoLabel);
+                root.setStyle("-fx-background-color: black;");
+
+                Stage stage = new Stage();
+                stage.setTitle("Message from " + sender);
+                stage.setScene(new Scene(root, 640, 200));
+                stage.show();
+
+                Timeline expiryChecker = new Timeline(
+                    new KeyFrame(Duration.seconds(1), e ->{
+                        if (policy.isExpired()){
+                            Platform.runLater(stage::close);
+                        }
+                    })
+                );
+                expiryChecker.setCycleCount(Timeline.INDEFINITE);
+                expiryChecker.play();
+                stage.setOnHidden(e -> expiryChecker.stop());
+
+             } catch (Exception e) {
+                showError("Failed to open message: " + e.getMessage());
+             } 
+    });
+                return watermarkText;
+            }
+
     public static class FilePicker {
 
         public static File pickImage() {
@@ -318,7 +361,9 @@ public static String downloadImage(String sender, String reciever, String base64
 }
 
 public static void downloadFile(String sender, String reciever, String base64Data, String fileName){
-
+    try {
+        byte[] fileBytes = Base
+    }
 }
 
 }
