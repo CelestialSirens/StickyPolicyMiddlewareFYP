@@ -233,16 +233,23 @@ public class Phoebe {
                                         System.out.println("[Phoebe]: Type 'View' to open it, or anything else to skip");
                                         String imgChoice = scanner.nextLine().trim();
                                         if (imgChoice.equalsIgnoreCase("view")){
-                                            InboxFX.showImage(messageEntry.sender, username, messageEntry.content, messageEntry.fileName);
+                                           String viewWatermark = InboxFX.showImage(messageEntry.sender, username, messageEntry.content, messageEntry.fileName, messageEntry.policy);
+                                           if (viewWatermark != null){
+                                                    sendTo(messageEntry.sender, jsonBuilder(username, messageEntry.sender, viewWatermark,
+                                                         "View_Notify" , messageEntry.fileName,new StickyPolicy.Builder().build()));
                                         } else if (imgChoice.equalsIgnoreCase("download")){
                                             if (!messageEntry.policy.canDownload()){
                                                 System.out.println("[Phoebe]: Download not permitted by sender policies");
                                             } else {
-                                                InboxFX.downloadImage(messageEntry.sender, username,messageEntry.content,messageEntry.fileName);
+                                                String downloadWatermark = InboxFX.downloadImage(messageEntry.sender, username, messageEntry.content, messageEntry.fileName);
+                                                if (downloadWatermark != null){
+                                                    sendTo(messageEntry.sender, jsonBuilder(username, messageEntry.sender, downloadWatermark,
+                                                         "Download_Notify" , messageEntry.fileName,new StickyPolicy.Builder().build()));
+                                                }
                                             } 
 
                                         }
-
+                                    }
                                     break;
 
                                 case "File":
@@ -250,7 +257,7 @@ public class Phoebe {
                                         System.out.println("[Phoebe]: Type 'View' to open it, or anything else to skip");
                                         String fileChoice = scanner.nextLine().trim();
                                         if (fileChoice.equalsIgnoreCase("view")){
-                                            InboxFX.showFile(messageEntry.sender, username, messageEntry.content, messageEntry.fileName);
+                                            InboxFX.showFile(messageEntry.sender, username, messageEntry.content, messageEntry.fileName, messageEntry.policy);
                                         } else if (fileChoice.equalsIgnoreCase("download")){
                                             if (!messageEntry.policy.canDownload()){
                                                 System.out.println("[Phoebe]: Download not permitted by sender policies");
@@ -291,7 +298,7 @@ public class Phoebe {
                         boolean imgRead = imgReadAllow.isEmpty() || imgReadAllow.equalsIgnoreCase("yes") 
                         || imgReadAllow.equalsIgnoreCase("y");
                              if (!imgRead) { System.out.println("[Phoebe]: Read isn't allowed, ending command"); break;}
-                        System.out.println("Allow user to download? [Yes or No : Default = Yes]");
+                        System.out.println("Allow user to download? [Yes or No : Default = No]");
                         String imgDownloadAllow = scanner.nextLine().trim();
                         boolean imgDownload = imgDownloadAllow.equalsIgnoreCase("yes") 
                         || imgDownloadAllow.equalsIgnoreCase("y");
@@ -330,7 +337,7 @@ public class Phoebe {
                         boolean fileRead = fileReadAllow.isEmpty() || 
                         fileReadAllow.equalsIgnoreCase("yes") || fileReadAllow.equalsIgnoreCase("y");
                             if (!fileRead) { System.out.println("([Phoebe]: Read isn't allowed, ending command.)"); break;}
-                        System.out.println("Allow user to download? [Yes or No : Default = Yes]");
+                        System.out.println("Allow user to download? [Yes or No : Default = No]");
                         String fileDownloadAllow = scanner.nextLine();
                         boolean fileDownload = fileDownloadAllow.equalsIgnoreCase("yes")
                         || fileDownloadAllow.equalsIgnoreCase("y"); 
@@ -743,8 +750,19 @@ public class Phoebe {
                         case "Update_Denied":
                             System.out.println("[Phoebe]: " + sender + " denied DHT sync request");
                             break;
-                        
-                        default:
+                        case "View_Notify":
+                            System.out.println("[Phoebe]: " + sender + " viewed your file" + Crow.optString("FileName", "unknown"));
+                            System.out.println("[Phoebe]: Watermark on their render is: " + Crow.optString("Message", ""));
+                            break;
+                        case "Download_Notify":
+                            String downloadedFile = Crow.optString("FileName", "unknown_file");
+                            String watermark = Crow.optString("Message", "");
+                            System.out.println("[Phoebe]: " + sender + " has downloaded your file " + downloadedFile);    
+                            System.out.println("[Phoebe]: Watermark for their copy is: " + watermark );
+                            System.out.println("[Phoebe]: Please keep this downloaded externally, to check against if image is made public");
+                            break;
+                                
+                            default:
                             System.out.println("[Phoebe]: " + sender  + " sent an unknown message type: " + typeOfData);
                                 break;
 

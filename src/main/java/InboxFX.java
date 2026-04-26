@@ -1,28 +1,31 @@
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.awt.image.BufferedImage;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.json.JSONObject;
+
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.Label;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -31,6 +34,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 
 
@@ -38,7 +42,7 @@ import javafx.stage.Stage;
 
 
 public class InboxFX {
-    public static void showImage(String sender, String reciever, String base64Data, String fileName){
+    public static String showImage(String sender, String reciever, String base64Data, String fileName, StickyPolicy policy){
   
         try {
         //            \\ __^^^^__ // 
@@ -46,6 +50,7 @@ public class InboxFX {
                       //{  ___  }\\                                                                 its only right to have ASCII art .                                                                
         } catch (IllegalStateException e){
         }
+        String watermarkText = "Phoebe~/" + StickyPolicy.Watermark.generateWatermark(sender, reciever, Instant.now().getEpochSecond());
         Platform.runLater(() -> {
 
             try {
@@ -56,7 +61,7 @@ public class InboxFX {
                     showError("Could not load image: " + fileName);
                     return;
                 }
-                String watermarkText = "Phoebe~/" + StickyPolicy.Watermark.generateWatermark(sender, reciever, Instant.now().getEpochSecond());
+                
                 ImageView imageView = new ImageView(image);
                 imageView.setPreserveRatio(true);
                 imageView.setFitWidth(Math.min(image.getWidth(), 800));
@@ -68,7 +73,7 @@ public class InboxFX {
                 );
                 drawWatermark(watermarkCanvas, watermarkText);
                 StackPane imageStack = new StackPane(imageView, watermarkCanvas);
-                imageStack.setStyle("-fx-background-color: pink;");
+                imageStack.setStyle("-fx-background-color: black;");
 
                 Label infoLabel = buildInfoBar("From: " + sender + " | "+ fileName + " | " + watermarkText);
                 
@@ -82,13 +87,27 @@ public class InboxFX {
                 stage.setScene(new Scene(root));
                 stage.setResizable(true);
                 stage.show();
-            } catch (Exception e) { showError("Failed to open image: " + e.getMessage());
+
+                Timeline expiryChecker = new Timeline(
+                    new KeyFrame(Duration.seconds(1), e -> {
+                        if (policy.isExpired()) {
+                            Platform.runLater(stage::close);
+                        }
+                    })
+                );
+                expiryChecker.setCycleCount(Timeline.INDEFINITE);
+                expiryChecker.play();
+                stage.setOnHidden(e -> expiryChecker.stop());
+
+                
+            } catch (Exception e) { 
+                showError("Failed to open image: " + e.getMessage());
             }
         });
-       
+       return watermarkText;
     }    
 
-    public static void showFile(String sender, String reciever, String base64Data, String fileName){
+    public static void showFile(String sender, String reciever, String base64Data, String fileName, StickyPolicy policy){
             try{
                 Platform.startup(() -> {});
             } catch(IllegalStateException e){
@@ -98,7 +117,7 @@ public class InboxFX {
                     String watermarkText = "Phoebe" + StickyPolicy.Watermark.generateWatermark(sender, reciever, Instant.now().getEpochSecond());
                     String ext = fileName.contains(".") ? fileName.substring(fileName.lastIndexOf('.')+ 1).toLowerCase() : "";
                     switch (ext) {
-                        case "pdf" -> showPDF(sender, fileName, fileBytes, watermarkText);
+                        case "pdf" -> showPDF(sender, fileName, fileBytes, watermarkText, policy);
                         default -> showError("Unsupported File Type:" + ext);
                     }
                 }
@@ -106,7 +125,7 @@ public class InboxFX {
                 }
             });
     }
-    public static void showPDF(String sender, String fileName, byte[] fileBytes, String watermarkText){
+    public static void showPDF(String sender, String fileName, byte[] fileBytes, String watermarkText, StickyPolicy policy){
             try{
                 int[] currentPage = {0};
                 PDDocument document = Loader.loadPDF(fileBytes);
@@ -127,7 +146,7 @@ public class InboxFX {
                 drawWatermark(watermarkCanvas, watermarkText);
 
                 StackPane pageStack = new StackPane(pageView, watermarkCanvas);
-                pageStack.setStyle("-fx-background-color: white;");
+                pageStack.setStyle("-fx-background-color: black;");
 
                 ScrollPane scrollPane = new ScrollPane(pageStack);
                 scrollPane.setFitToWidth(true);
@@ -172,6 +191,18 @@ public class InboxFX {
                 stage.setTitle("PDF from " + sender + "--" + fileName);
                 stage.setScene(new Scene(root, 860,800));
                 stage.show();
+
+                Timeline expiryChecker = new Timeline(
+                    new KeyFrame(Duration.seconds(1), e -> {
+                        if (policy.isExpired()) {
+                            Platform.runLater(stage::close);
+                        }
+                    })
+                );
+                expiryChecker.setCycleCount(Timeline.INDEFINITE);
+                expiryChecker.play();
+                stage.setOnHidden(e -> expiryChecker.stop());
+
             } catch (Exception e) { showError("Failed to render PDF: " + e.getMessage()); }
     }
     public static javafx.scene.image.Image bufferedToFX(BufferedImage buffered) {
@@ -256,7 +287,7 @@ public class InboxFX {
     
 }
 
-public static void downloadImage(String sender, String reciever, String base64Data, String fileName) {
+public static String downloadImage(String sender, String reciever, String base64Data, String fileName) {
     try {
         byte[] imageBytes = Base64.getDecoder().decode(base64Data);
         String downloadsPath = System.getProperty("user.home") + File.separator + "Downloads";
@@ -279,8 +310,10 @@ public static void downloadImage(String sender, String reciever, String base64Da
             System.out.println("[Phoebe]: Image Saved to " + outputFile.getAbsolutePath());
             System.out.println("[Phoebe]: Metadata Saved to " + metaFile.getAbsolutePath());
             System.out.println("[Phoebe]: Watermark: " + watermark);
+            return watermark;
         } catch (Exception e) {
             System.out.println("[Phoebe]: Download failed: " + e.getMessage());
+            return null;
         }
 }
 
