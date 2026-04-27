@@ -26,7 +26,7 @@ public class Phoebe {
 
         private static String username;
         private static int myPort;
-        //private static String IP;   < -- Last config change with the other stuff
+        private static String localNetIP;  
         private static String localIp;
 
     public static void main(String[] args) throws IOException {
@@ -34,16 +34,20 @@ public class Phoebe {
         System.out.println("--- Welcome to Phoebe ---");
         System.out.print("Enter your username: ");    // limit users to NOT have # in their name ... < --- for counter thingy 
         username = scanner.nextLine().trim();
-      //  System.out.println("If using only in Intranet please type yes, otherwise Phoebe will use Public IP");
-       // IP = scanner.nextLine().trim();
-       // if (IP.equalsIgnoreCase("yes")) {
-         //   Object obj = (Object)scanner.nextLine();
-            
+     
       //  }  ^^ Only once actually finished try this since its technically just a config change 
         System.out.print("Enter the port you want to listen on (any open port between 1 - 50,000): ");
         myPort = Integer.parseInt(scanner.nextLine());
         localIp = InetAddress.getLocalHost().getHostAddress();
-      //  IP = getPublicIP();
+        String localNetIP = localIp;
+        String publicIP = getPublicIP();
+        if (publicIP != null) {
+            localIp = publicIP;
+            System.out.println("[Phoebe]: Using public IP : " + localIp);
+        } else {
+            System.out.println("[Phoebe]: Using local IP : " + localIp);
+        }
+    
         new Thread(new ServerTask(myPort)).start();
         try {
             Platform.startup(() -> {});
@@ -222,7 +226,7 @@ public class Phoebe {
                         System.out.println("[Phoebe]: You have been sent a :" + messageEntry.type + " from " + messageEntry.sender); // add variable for time transformation here ); 
 
                             if (messageEntry.policy.isExpired()){
-                                System.out.println("[Testing]: Content - No longer viewable");
+                                System.out.println("[Phoebe]: Content - No longer viewable");
                                 messageInbox.remove(0);
                                 break;
                             } 
@@ -237,7 +241,12 @@ public class Phoebe {
 
                                 case "Image":
                                         System.out.println("[Phoebe]: Image recieved - " + messageEntry.fileName);
-                                        System.out.println("[Phoebe]: Type 'View' to open it, or anything else to skip");
+                                        if (messageEntry.policy.canDownload()){
+                                            System.out.println("[Phoebe]: Type 'View' to open it, 'Download' to save it. 'Next' to move to next message, or any other message to back to menu");
+                                        }
+                                        else {
+                                            System.out.println("[Phoebe]: Type 'View' to open it, or anything else to skip");
+                                        }
                                         String imgChoice = scanner.nextLine().trim();
                                         if (imgChoice.equalsIgnoreCase("view")){
                                            String viewWatermark = InboxFX.showImage(messageEntry.sender, username, messageEntry.content, messageEntry.fileName, messageEntry.policy);
@@ -261,7 +270,12 @@ public class Phoebe {
 
                                 case "File":
                                         System.out.println("[Phoebe]: File recieved - " + messageEntry.fileName);
-                                        System.out.println("[Phoebe]: Type 'View' to open it, or anything else to skip");
+                                         if (messageEntry.policy.canDownload()){
+                                            System.out.println("[Phoebe]: Type 'View' to open it, 'Download' to save it. 'Next' to move to next message, or any other message to back to menu");
+                                        }
+                                        else {
+                                            System.out.println("[Phoebe]: Type 'View' to open it, or anything else to skip");
+                                        }
                                         String fileChoice = scanner.nextLine().trim();
                                         if (fileChoice.equalsIgnoreCase("view")){
                                             InboxFX.showFile(messageEntry.sender, username, messageEntry.content, messageEntry.fileName, messageEntry.policy);
@@ -269,7 +283,11 @@ public class Phoebe {
                                             if (!messageEntry.policy.canDownload()){
                                                 System.out.println("[Phoebe]: Download not permitted by sender policies");
                                             } else {
-                                                InboxFX.downloadFile(messageEntry.sender, username, messageEntry.content, messageEntry.fileName);
+                                                String downloadWatermark = InboxFX.downloadFile(messageEntry.sender, username, messageEntry.content, messageEntry.fileName);
+                                                if (downloadWatermark != null){
+                                                    sendTo(messageEntry.sender, jsonBuilder(username, messageEntry.sender, downloadWatermark,
+                                                         "Download_Notify", messageEntry.fileName, new StickyPolicy.Builder().build()));
+                                                }
                                             }
                                         }
 
@@ -407,9 +425,9 @@ public class Phoebe {
 // Checks target is real and ACTUALLY dm's only to them
     private static boolean sendTo(String targetName, String message){
         synchronized(peers){
-            System.out.println("[Testing]: Looking for " + targetName + " in list");  // remember to remove this .
+           // System.out.println("[Testing]: Looking for " + targetName + " in list");  // remember to remove this .
             for (Peer peer:peers){
-                System.out.println("[Testing]: Found peer: " + peer.username + "");  // and this .
+             //   System.out.println("[Testing]: Found peer: " + peer.username + "");  // and this .
                 if (peer.username.equals(targetName)){
                     try{
                         if (peer.e2ee != null){
@@ -431,7 +449,7 @@ public class Phoebe {
             connectToPeer(peerInfo.ip, peerInfo.port);
             synchronized (peers) {
                 for (Peer peer : peers){
-                    System.out.println("[Testing]: " + peer.username + " " + peer.ip + ":" + peer.port); // remember to change from [Testing] .  remove after ..
+                    System.out.println("[Phoebe]: " + peer.username + " " + peer.ip + ":" + peer.port); // remember to change from [Testing] .  remove after ..
                 }
                 for (Peer peer : peers) {
                     if (peer.ip.equals(peerInfo.ip) && peer.port == peerInfo.port){
@@ -478,8 +496,27 @@ public class Phoebe {
                 }
             }
         }
+        String[] ipsToTry = ip.equals(localIp)
+        ? new String[]{localNetIP, "127.0.0.1"}
+        : new String[]{ip};
+
+        Socket socket = null;
+        String connectedIP = null;
+        for (String tryIP : ipsToTry){
         try {
-            Socket socket = new Socket(ip, port);
+            socket = new Socket(tryIP,port);
+            connectedIP = tryIP;
+            break;
+        } catch (Exception e){
+            System.out.println("[Phoebe]: Failed to connect to " + tryIP + ":" + port);
+        }
+
+        }
+        if (socket==null){
+            System.out.println("[Phoebe]: Could not connect to " + ip + ":" + port);
+            return;
+        }
+        try{
             PrintWriter out = new PrintWriter(socket.getOutputStream(),true);
             BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out.println("INIT");
@@ -492,9 +529,9 @@ public class Phoebe {
                 try {
                     DHT peerDHT = DHT.fromJson(new JSONObject(peerDHTJson));
                     dht.merge(peerDHT);
-                System.out.println("[Testing]: Tables merged - Line 380");  // remove testing & line mention 
+               //System.out.println("[Testing]: Tables merged - Line 380");  // remove testing & line mention 
             } catch (Exception e){
-                System.out.println("[Testing]: Tables failed to merge - 382"); // ditto to above x2
+               // System.out.println("[Testing]: Tables failed to merge - 382"); // ditto to above x2
             }
         }
             String ready = input.readLine();
@@ -645,11 +682,12 @@ public class Phoebe {
                 }
 
                 try {
+                    dht.remove(senderUsername);
                     dht.register(senderUsername, socket.getInetAddress().getHostAddress(), d1ListenPort);
                 } catch (Exception e) {
                     System.out.println("[Peer handler]:"+ e.getMessage());
                 }
-                String resolvedName = dht.getLastRegisteredName(); 
+                String resolvedName = senderUsername; 
                 synchronized(peers){
                     for(Peer peer : peers){
                         if (peer.out == out) {
@@ -666,16 +704,19 @@ public class Phoebe {
                 System.out.println("[Phoebe]: " + resolvedName + " " + "has connected.");
                 } else 
                 try{
-                    String nonDefaultName = "defaultName";
+                    String nonDefaultName = peer.username;
+                    if (nonDefaultName.equals("defaultName")){
                     for (Map.Entry<String, DHT.PeerInfo> en : dht.getTable().entrySet()) {
-                        if (en.getValue().ip.equals(socket.getInetAddress().getHostAddress()) && en.getValue().port == peerListenPort){
-                        nonDefaultName = en.getKey();
-                        break;
-                    }
-                }
+                            if (en.getValue().port == peerListenPort){
+                                nonDefaultName = en.getKey();
+                                break;
+                                }    
+                            }
+                       }
 
+                dht.remove(nonDefaultName);
                 dht.register(nonDefaultName, socket.getInetAddress().getHostAddress(), peerListenPort);
-                final String realUsername = dht.getLastRegisteredName();
+                final String realUsername = nonDefaultName;
                 synchronized (peers) {
                     for (Peer peer : peers){
                         if (peer.out == out){
@@ -871,11 +912,20 @@ public class Phoebe {
             this.policy = policy;
         }
     }
-   // public static String getPublicIP(){
-      //  try {
-//return 
-     //   } catch (Exception e) {
-     //       return null;
-  //      }
+    public static String getPublicIP(){
+        try {
+            java.net.URI uri = new java.net.URI("https://api.ipify.org");
+            java.net.HttpURLConnection connection = (java.net.HttpURLConnection) uri.toURL().openConnection();
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(3000);
+            connection.setReadTimeout(3000);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            String ip = reader.readLine().trim();
+            reader.close();
+            return ip;
+        } catch (Exception e) {
+            return null;
+        }
     }
+}
 

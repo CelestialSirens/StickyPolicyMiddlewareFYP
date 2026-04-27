@@ -25,7 +25,7 @@ public class StickyPolicy {
         public boolean canRead() {return allowRead;}
         public boolean canDownload() {return allowDownload;}
         public boolean isExpired() {
-            System.out.println("[Testing]: Checking expiry, value is " + this.expiryEpoch);
+          //  System.out.println("[Testing]: Checking expiry, value is " + this.expiryEpoch);
             if (this.expiryEpoch == 0) {return false;}
             try {
                 long now = TimeCheck.UTCTime();
