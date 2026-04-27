@@ -361,9 +361,9 @@ public static String downloadImage(String sender, String reciever, String base64
 }
 
 public static void downloadFile(String sender, String reciever, String base64Data, String fileName){
-    try {
-        byte[] fileBytes = Base
-    }
+    //try {
+    //    byte[] fileBytes = Base
+  //  }
 }
 
 }
