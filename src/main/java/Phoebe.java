@@ -627,10 +627,7 @@ public class Phoebe {
             }
         }
     }
-    
-    // this needs HEAVY editing, its the biggest connection .... 12/04/26 -> This really should have been its own file, can i even actually do that now? Is it too big to *actually* move???
-    // i think this is honestly the worst class ive ever written. I'm reading through it and genuinely crying at how messy it is and how it feels so unoptimised
-    // not even just the class, this whole project i hate . It cant do what i wanted it to do i didnt understand 
+ 
     
     private static class PeerHandler implements Runnable {
         private final Socket socket; 
