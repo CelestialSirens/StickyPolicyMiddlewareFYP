@@ -209,7 +209,9 @@ public class Phoebe {
                             break;
                         }
                         StickyPolicy policy = builder.build();
-                        sendTo(receiverUUID, jsonBuilder(username, receiverUUID, content, "Text", "", policy));
+                        if (sendTo(receiverUUID, jsonBuilder(username, receiverUUID, content, "Text", "", policy))){
+                            System.out.println("[Phoebe]: Message sent to " + receiverUUID);
+                        }
                     break;
                 case "/INBOX":
                         synchronized (messageInbox) {
@@ -222,8 +224,15 @@ public class Phoebe {
                             UserInbox messageEntry = messageInbox.get(msg);
                             System.out.println("[Phoebe]: Message " + (msg+1) + " of " + messageInbox.size());
                         
-                        
-                        System.out.println("[Phoebe]: You have been sent a :" + messageEntry.type + " from " + messageEntry.sender); // add variable for time transformation here ); 
+                        String expiryDisplay;
+                        if (messageEntry.policy.getExpiryEpoch() <= 0){
+                            expiryDisplay = "No expiry";
+                        } else {
+                            expiryDisplay = java.time.Instant.ofEpochSecond(messageEntry.policy.getExpiryEpoch())
+                            .atZone(java.time.ZoneOffset.UTC)
+                            .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) + " UTC";
+                        }
+                        System.out.println("[Phoebe]: You have been sent a :" + messageEntry.type + " from " + messageEntry.sender + " | Expires at: " + expiryDisplay); // add variable for time transformation here ); 
 
                             if (messageEntry.policy.isExpired()){
                                 System.out.println("[Phoebe]: Content - No longer viewable");
@@ -344,7 +353,10 @@ public class Phoebe {
                             String actualName = imgFile.getName();
                             String b64 = FileConversions.imageToB64(imgPath);
                             String imgJson = jsonBuilder(username, imgReceiver, b64, "Image", actualName, imgPolicy);
-                            sendTo(imgReceiver, imgJson);
+                           
+                            if (sendTo(imgReceiver, imgJson)){
+                                System.out.println("[Phoebe]: Image sent to " + imgReceiver);
+                            }
                         } catch (Exception e) {
                             System.out.println("[Phoebe]: "+ e.getMessage());
                         }
@@ -379,7 +391,10 @@ public class Phoebe {
                             String actualName = fileFile.getName();
                             String b64 = FileConversions.fileToB64(fileFilePath); 
                             String fileJson = jsonBuilder(username, fileReceiver, b64, "File", actualName, filePolicy);
-                            sendTo(fileReceiver, fileJson);
+                            
+                            if (sendTo(fileReceiver, fileJson)){
+                                System.out.println("[Phoebe]: File sent to " + fileReceiver);
+                            }
                         } catch (Exception e) {
                             System.out.println("[Phoebe]: "+ e.getMessage());
                         }

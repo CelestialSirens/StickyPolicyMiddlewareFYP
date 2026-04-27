@@ -24,7 +24,9 @@ public class StickyPolicy {
         }
         public boolean canRead() {return allowRead;}
         public boolean canDownload() {return allowDownload;}
+        public long getExpiryEpoch() {return expiryEpoch;}
         public boolean isExpired() {
+        
           //  System.out.println("[Testing]: Checking expiry, value is " + this.expiryEpoch);
             if (this.expiryEpoch == 0) {return false;}
             try {
@@ -130,6 +132,8 @@ public class Watermark {
         }
     }
 }
+
+
 }
 
 
