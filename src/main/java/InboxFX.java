@@ -360,10 +360,21 @@ public static String downloadImage(String sender, String reciever, String base64
         }
 }
 
-public static void downloadFile(String sender, String reciever, String base64Data, String fileName){
-    //try {
-    //    byte[] fileBytes = Base
-  //  }
+public static String downloadFile(String sender, String reciever, String base64Data, String fileName){
+    try {
+        byte[] fileBytes = Base64.getDecoder().decode(base64Data);
+        String downloadsPath = System.getProperty("user.home" + File.separator + "Downloads");
+        long timestamp = Instant.now().getEpochSecond();
+        String watermark = "Phoebe~/" + StickyPolicy.Watermark.generateWatermark(sender, reciever, timestamp);
+        File outputFile = new File(downloadsPath + File.separator + fileName);
+        java.nio.file.Files.write(outputFile.toPath(), fileBytes);
+    System.out.println("[Phoebe]: Image Saved to " + outputFile.getAbsolutePath());
+            System.out.println("[Phoebe]: Watermark: " + watermark);
+            return watermark;
+        } catch (Exception e) {
+            System.out.println("[Phoebe]: Download failed: " + e.getMessage());
+            return null;
+        }
 }
 
 }
