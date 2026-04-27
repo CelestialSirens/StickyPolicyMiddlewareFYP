@@ -65,12 +65,7 @@ Meta data found attatched to the data sent is then processed once a user recieve
 
   - Phoebe hosts a variety of commands that allow Users to specify what style of message or action they desire.
   - A simplified Distributed Hash table which allows users to merge tables with each other and update them to have additional users present.
-  - A / 
-
-## In development features
-  
-  - DHT based communication , either based on tomp2p or a simple handmade version .
-  - Robust selection of file types to be transfered including  PNG, PDF, JPEG, [ADD OTHERS WHEN DONE]
+    
 
 
 # Usage
@@ -84,10 +79,9 @@ Meta data found attatched to the data sent is then processed once a user recieve
   ```
   After Phoebe is running, a user MUST know a bootstrap nodes information to be able to communicate with them.
   
-  ^ this needs editing to be usable still 
 
   To use Phoebe some prerequisites are needed. 
-  First a user must have downloaded this repository 
+  First a user must have downloaded this repository, and have JAVA 21 installed, as Phoebe uses this to run. As Maven is with the repository it should already install all other dependencies required to run Phoebe once the Repository is installed. 
     
 
 
