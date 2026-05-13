@@ -23,6 +23,8 @@ public class Phoebe {
     private static final List<Peer> peers = Collections.synchronizedList(new ArrayList<>());
     private static final List<PendingRequest> pendingRequests = Collections.synchronizedList(new ArrayList<>());
     private static final List<UserInbox> messageInbox = Collections.synchronizedList(new ArrayList<>());
+    // private static final List<SetRoles> userDefinedRoles = Collections.synchronizedList(new ArrayList<>());
+    // private static final List<GivenRoles> givenUserRoles = Collections.synchronizedLizt(new ArrayList<>());
 
         private static String username;
         private static int myPort;
@@ -39,14 +41,14 @@ public class Phoebe {
         System.out.print("Enter the port you want to listen on (any open port between 1 - 50,000): ");
         myPort = Integer.parseInt(scanner.nextLine());
         localIp = InetAddress.getLocalHost().getHostAddress();
-        String localNetIP = localIp;
-        String publicIP = getPublicIP();
-        if (publicIP != null) {
-            localIp = publicIP;
-            System.out.println("[Phoebe]: Using public IP : " + localIp);
-        } else {
-            System.out.println("[Phoebe]: Using local IP : " + localIp);
-        }
+        // String localNetIP = localIp;
+        // String publicIP = getPublicIP();
+        // if (publicIP != null) {
+        //     localIp = publicIP;
+        //     System.out.println("[Phoebe]: Using public IP : " + localIp);
+        // } else {
+        //     System.out.println("[Phoebe]: Using local IP : " + localIp);
+        // }
     
         new Thread(new ServerTask(myPort)).start();
         try {
@@ -190,8 +192,10 @@ public class Phoebe {
                     break;
 
                 case "/MESSAGE":
-                        System.out.print("[Message-Command]Send to: ");
+                        System.out.print("[Message-Command]Person to Send to, leave blank if role based: ");
                         String receiverUUID = scanner.nextLine().trim();
+                        System.out.println("[Message-Command]Role to send message to, leave blank if person based: ");
+                        String roleMsgReciever = scanner.nextLine().trim();
                         System.out.print("[Message-Command]Message to send: ");
                         String content = scanner.nextLine().trim();
                         System.out.println("[Message-Command]Set Policy requirements; ");
@@ -213,6 +217,7 @@ public class Phoebe {
                             System.out.println("[Phoebe]: Message sent to " + receiverUUID);
                         }
                     break;
+
                 case "/INBOX":
                         synchronized (messageInbox) {
                             if (messageInbox.isEmpty()){
@@ -407,10 +412,22 @@ public class Phoebe {
                         System.out.println("Your port is: " + myPort);
                         String tableContents = String.join(",", dht.getTable().keySet()); 
                         System.out.println("The Users you can currently contact are: " + tableContents);
+                        System.out.println("The current roles you have are: ");
+                        break;
+
+                case "/SETTINGS":
+                        System.out.println("[Phoebe]: Please be aware :");
+                        System.out.println("[Phoebe]: When setting roles here they are defined by you, meaning other users could also name roles like that. ");
+                        System.out.println("[Phoebe]: Any content you wish to send will mention the role was set by you, so please keep an accurate list");
+                        System.out.println("[Phoebe]: Define what role you wish to make, or type 'BACK' with the apostraphes ");   
+                        String userSetRole = scanner.nextLine().trim();
+                        if (userSetRole.equalsIgnoreCase("back")){ System.out.println("Sending back to menu, please use the command again"); break;}           
+                        System.out.println("[Phoebe]: The role created is " + userSetRole + " there are currently no users of this role set");    
+                        System.out.println("[Phoebe]: ");
                         break;
 
                 case "/HELP":
-                        System.out.println("Below are all the commands you can use, alongside a small description of their uses.");
+                        System.out.println("[Phoebe]: Below are all the commands you can use, alongside a small description of their uses.");
                         System.out.println("/Initalise - need to do this with a known user to initiate your tables");
                         System.out.println("/Connect - connect to a known user without JSON based security. Only use this feature if you wish to speak to multiple people in a potenitally non-secure way.");
                         System.out.println("/Update - updates all tables you are connected to, provided they accept");
@@ -418,6 +435,7 @@ public class Phoebe {
                         System.out.println("/Image - send an image to a known user");
                         System.out.println("/File - send a file to a known user");
                         System.out.println("/Info - tells you your networking infomation (Ip & Port)");
+                        System.out.println("/Settings - set useful information like user roles and user info");
                         System.out.println("/Help - shows this list of commands");
                         System.out.println("/Exit - close Phoebe");                    
                         break;
@@ -426,6 +444,7 @@ public class Phoebe {
                         System.out.println("Closing Phoebe");
                         System.exit(0);
                         break; 
+                        
                default:
                    if (input.startsWith("/")){
                        System.out.println("Command not recognised, type /Help for listed commands");
@@ -924,6 +943,16 @@ public class Phoebe {
             this.policy = policy;
         }
     }
+
+    // public static class SetRoles{
+    //     public final String role;
+
+    //     public userDefinedRoles(String role){
+    //         this.role = role;
+    //     }
+    // }
+
+
     public static String getPublicIP(){
         try {
             java.net.URI uri = new java.net.URI("https://api.ipify.org");
