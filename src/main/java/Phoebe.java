@@ -36,7 +36,7 @@ public class Phoebe {
         System.out.println("--- Welcome to Phoebe ---");
         System.out.print("Enter your username: ");    // limit users to NOT have # in their name ... < --- for counter thingy 
         username = scanner.nextLine().trim();
-     
+
       //  }  ^^ Only once actually finished try this since its technically just a config change 
         System.out.print("Enter the port you want to listen on (any open port between 1 - 50,000): ");
         myPort = Integer.parseInt(scanner.nextLine());
@@ -49,7 +49,7 @@ public class Phoebe {
         // } else {
         //     System.out.println("[Phoebe]: Using local IP : " + localIp);
         // }
-    
+
         new Thread(new ServerTask(myPort)).start();
         try {
             Platform.startup(() -> {});
@@ -64,7 +64,7 @@ public class Phoebe {
             } catch (Exception e) {
             System.out.println("[Phoebe-Error]: " + e.getMessage());
             }        
-        
+ 
         System.out.println("You are listening on port " + myPort);
         System.out.println("To connect to other users, type: /connect");  
         System.out.println("To message a specific user, use /message");
@@ -237,7 +237,7 @@ public class Phoebe {
                             .atZone(java.time.ZoneOffset.UTC)
                             .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) + " UTC";
                         }
-                        System.out.println("[Phoebe]: You have been sent a :" + messageEntry.type + " from " + messageEntry.sender + " | Expires at: " + expiryDisplay); // add variable for time transformation here ); 
+                        System.out.println("[Phoebe]: You have been sent a :" + messageEntry.type + " from " + messageEntry.sender + " | Expires at: " + expiryDisplay); // add what "Role" message is for here <--
 
                             if (messageEntry.policy.isExpired()){
                                 System.out.println("[Phoebe]: Content - No longer viewable");
@@ -444,7 +444,7 @@ public class Phoebe {
                         System.out.println("Closing Phoebe");
                         System.exit(0);
                         break; 
-                        
+
                default:
                    if (input.startsWith("/")){
                        System.out.println("Command not recognised, type /Help for listed commands");
@@ -502,7 +502,7 @@ public class Phoebe {
 
     // -- Json Code below -- 
    public static String jsonBuilder(String senderUsername, String receiverUsername, String message, String typeOfData, String fileName, StickyPolicy policy){
-        
+
     JSONObject Crow = new JSONObject()
     .put("Progenitor", senderUsername)
     .put("Receiver", receiverUsername)

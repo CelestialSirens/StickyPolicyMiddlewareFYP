@@ -16,11 +16,13 @@ public class StickyPolicy {
         private final boolean allowRead;
         private final long expiryEpoch;
         private final boolean allowDownload;
+        //private final boolean hasRole;
 
         private StickyPolicy(Builder builder) {
             this.allowRead = builder.allowRead;
             this.expiryEpoch = builder.expiryEpoch;
             this.allowDownload = builder.allowDownload;
+            //this.hasRole = builder.hasRole;
         }
         public boolean canRead() {return allowRead;}
         public boolean canDownload() {return allowDownload;}

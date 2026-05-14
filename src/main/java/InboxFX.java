@@ -161,6 +161,7 @@ public class InboxFX {
                 if (pageCount == 1) nxButton.setDisable(true); 
 
                 prButton.setOnAction(e -> {
+                    currentPage[0]--;
                     pageView.setImage(pages.get(currentPage[0]));
                     drawWatermark(watermarkCanvas, watermarkText);
                     pageLabel.setText("Page " + (currentPage[0] + 1) + " of " + pageCount);
@@ -180,8 +181,8 @@ public class InboxFX {
                 navBar.setAlignment(Pos.CENTER);
                 navBar.setPadding(new Insets(6));
                 navBar.setStyle("-fx-background-color: blue;");
-
-                Label infoLabel = buildInfoBar("From: " + sender + "  /  " + fileName + " / " + watermarkText);
+                
+                Label infoLabel = buildInfoBar("From: " + sender + "  /  " + " Role needed:" + fileName + " / " + watermarkText);
                 BorderPane root = new BorderPane();
                 root.setCenter(scrollPane);
                 root.setTop(navBar);
