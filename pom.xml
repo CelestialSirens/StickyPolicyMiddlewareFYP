@@ -10,6 +10,7 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <maven.compiler.release>21</maven.compiler.release>
+        <javafx.version>21</javafx.version>
     </properties>
 
 <dependencies>
@@ -28,7 +29,6 @@
         <groupId>org.openjfx</groupId>
         <artifactId>javafx-controls</artifactId>
         <version>21</version>
-        <classifier>win</classifier>
     </dependency>
     <dependency>
         <groupId>org.apache.pdfbox</groupId>
@@ -44,7 +44,6 @@
         <groupId>org.openjfx</groupId>
         <artifactId>javafx-graphics</artifactId>
         <version>21</version>
-        <classifier>win</classifier>
     </dependency>
     <dependency>
         <groupId>org.bouncycastle</groupId>
@@ -54,26 +53,26 @@
 </dependencies>
     <build>
     <plugins>
+
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <version>3.2.5</version>
-            <configuration>
-                <source>11</source> <target>11</target>
-            </configuration>
         </plugin>
+
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
             <version>3.11.0</version>
             <configuration>
                  <release>21</release>
-                 <compilerargs>
+                 <compilerArgs>
                     <arg>--add-modules</arg>
                     <arg>javafx.controls,javafx.graphics</arg>
-                 </compilerargs>
+                 </compilerArgs>
             </configuration>
         </plugin>
+
         <plugin>
             <groupId>com.github.spotbugs</groupId>
             <artifactId>spotbugs-maven-plugin</artifactId>
@@ -85,11 +84,12 @@
             <artifactId>javafx-maven-plugin</artifactId>
             <version>0.0.8</version>
             <configuration>
-                <mainClass>Phoebe</mainClass>
+                <mainClass>com.myproject.Phoebe</mainClass>
                 <option>--add-modules</option>
-                <option>javafx.controls,javafx.graphics</option>
+                <option>javafx.controls,javafx.graphics,javafx.swing</option>
             </configuration>
         </plugin>
+
     </plugins>
     </build>
 </project>
